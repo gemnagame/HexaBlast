@@ -9,19 +9,24 @@ public class ColorBlock : MonoBehaviour
     bool m_use = false;
     BlockType m_blockType = BlockType.NONE;
 
-    public void Init(BlockType blockType, int indexX, int indexY)
+    public void Init(BlockType blockType)
     {
         m_use = blockType != BlockType.NONE;
-        
-        gameObject.SetActive(m_use);
-
         SetType(blockType);
 
-        if(m_debugLabel)
-        {
-            m_debugLabel.text = indexX + "," + indexY;
-        }
+        gameObject.SetActive(m_use);      
     }
+
+    public void SetPosition(Vector3 position)
+    {
+        transform.localPosition = position;
+    }
+
+    public BlockType GetBlockType()
+    {
+        return m_blockType;
+    }
+       
 
     void SetType(BlockType blockType)
     {
