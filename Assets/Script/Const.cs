@@ -17,3 +17,27 @@ public enum BlockType
     TOP
 }
 
+public enum Direction
+{
+    UP = 0,
+    DOWN,
+    LEFTUP,
+    LEFTDOWN,
+    RIGHTUP,
+    RIGHTDOWN
+}
+
+public struct Index
+{
+    public Index(int x, int y)
+    {
+        X = x;
+        Y = y;
+    }
+
+    public int X;
+    public int Y;
+}
+
+
+

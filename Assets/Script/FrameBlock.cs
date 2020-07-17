@@ -3,30 +3,28 @@ using UnityEngine.UI;
 
 public class FrameBlock : MonoBehaviour
 {
-    public Text m_debugLabel;
+    public Text m_debugLabel;//pyk 추후 제거
 
-    bool m_active = false;
-    int m_indexX = 0;
-    int m_indexY = 0;
-    ColorBlock m_colorBlock = null;   
+    bool m_active = false;//pyk 추후 불필요시 제거
+    Index m_index;
+    ColorBlock m_colorBlock = null;
 
-    public void Init(bool active, int indexX, int indexY)
+    public void Init(bool active, Index index)
     {
         m_active = active;
-        m_indexX = indexX;
-        m_indexY = indexY;
+        m_index = index;
 
         gameObject.SetActive(active);
 
         if(m_debugLabel)
         {
-            m_debugLabel.text = indexX + "," + indexY;
+            m_debugLabel.text = index.X + "," + index.Y;
         }
     }
 
     public void SetColorBlock(ColorBlock colorBlock)//pyk  아래 함수들 getta setta로 수정?
     {
-        m_colorBlock = colorBlock;        
+        m_colorBlock = colorBlock;
     }
 
     public ColorBlock GetColorBlock()
@@ -49,9 +47,9 @@ public class FrameBlock : MonoBehaviour
         return transform.localPosition;
     }
 
-    public Vector2 GetIndex()
+    public Index GetIndex()
     {
-        return new Vector2(m_indexX, m_indexY);
+        return m_index;
     }
 
     public void On_PointerDown()
