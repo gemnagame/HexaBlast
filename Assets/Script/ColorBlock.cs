@@ -1,25 +1,57 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class ColorBlock : MonoBehaviour
 {
-    public Text m_debugLabel;//pyk 추후 제거
     public Image m_imageBlock;
 
-    bool m_use = false;//pyk 추후 불필요시 제거
     BlockType m_blockType = BlockType.NONE;
+    bool m_moving = false;
+    Vector3 m_moveTargetPosition = Vector3.zero;
+    Action m_endMoveAction = null;
 
     public void Init(BlockType blockType)
     {
-        m_use = blockType != BlockType.NONE;
         SetType(blockType);
 
-        gameObject.SetActive(m_use);      
+        gameObject.SetActive(true);// m_use);//pyk test
+    }
+
+    void Update()
+    {
+        if (m_moving)
+        {
+            transform.localPosition = Vector3.MoveTowards(transform.localPosition, m_moveTargetPosition, Time.deltaTime * Const.BLOCK_MOVE_SPEED);
+
+            if(transform.localPosition == m_moveTargetPosition)
+            {
+                m_moving = false;
+
+                if (m_endMoveAction != null)
+                {
+                    m_endMoveAction();
+                }
+            }
+        }    
     }
 
     public void SetPosition(Vector3 position)
     {
         transform.localPosition = position;
+    }
+
+    public void StartMove(Vector3 moveTargetPosition, Action endMoveAction = null)
+    {
+        if(m_moving)
+        {
+            Debug.LogError("StartMove() : m_moving");
+            return;
+        }
+
+        m_moving = true;
+        m_moveTargetPosition = moveTargetPosition;
+        m_endMoveAction = endMoveAction;
     }
 
     public BlockType GetBlockType()
@@ -68,6 +100,11 @@ public class ColorBlock : MonoBehaviour
             case BlockType.PURPLE:
                 {
                     color = Color.magenta;
+                    break;
+                }
+            case BlockType.TOP:
+                {
+                    color = Color.black;
                     break;
                 }
         }

@@ -11,19 +11,27 @@ public class FrameBlock : MonoBehaviour
 
     public void Init(bool active, Index index)
     {
+        SetEmpty();
         m_active = active;
-        m_index = index;
+        m_index = index;        
 
-        gameObject.SetActive(active);
+        gameObject.SetActive(true);// active);//pyk test
 
-        if(m_debugLabel)
+        if (m_debugLabel)
         {
             m_debugLabel.text = index.X + "," + index.Y;
         }
     }
 
-    public void SetColorBlock(ColorBlock colorBlock)//pyk  아래 함수들 getta setta로 수정?
+    public void SetColorBlock(ColorBlock colorBlock)
     {
+        if (m_colorBlock != null)
+        {
+            Debug.LogError("SetColorBlock() : m_colorBlock != null");
+
+            return;
+        }
+
         m_colorBlock = colorBlock;
     }
 
@@ -40,6 +48,11 @@ public class FrameBlock : MonoBehaviour
         }
 
         return m_colorBlock.GetBlockType();
+    }
+
+    public void SetEmpty()
+    {
+        m_colorBlock = null;
     }
 
     public Vector3 GetPosition()

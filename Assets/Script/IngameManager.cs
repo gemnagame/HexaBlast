@@ -10,7 +10,8 @@ public class IngameManager : MonoBehaviour
     public Transform m_frameBlockAreaTrans;
     public Transform m_colorBlockAreaTrans;
 
-    bool m_gameReady = false;
+    bool m_isGameReady = false;
+    bool m_isSwapping = false;
 
     List<List<FrameBlock>> m_frameBlockList = new List<List<FrameBlock>>();
     float m_imageWidth = 70f;
@@ -124,13 +125,13 @@ public class IngameManager : MonoBehaviour
             }
         }
 
-        m_gameReady = true;
+        m_isGameReady = true;
     }
 
-    void Update()
-    {
+    //void Update()
+    //{
 
-    }
+    //}
 
     void OnDestroy()
     {
@@ -171,32 +172,39 @@ public class IngameManager : MonoBehaviour
     FrameBlock m_frameBlockStart = null;
     public void FrameBlockPointerDown(FrameBlock frameBlockStart)
     {
-        if (m_gameReady == false)
+        if (m_isGameReady == false || m_isSwapping)
         {
             return;
         }
+
+        Debug.Log("FrameBlockPointerDown");
 
         m_frameBlockStart = frameBlockStart;
     }
 
     public void FrameBlockPointerUp()
     {
-        if (m_gameReady == false)
+        if (m_isGameReady == false || m_isSwapping)
         {
             return;
         }
+
+        Debug.Log("FrameBlockPointerUp");
 
         m_frameBlockStart = null;
     }
 
     public void FrameBlockPointerEnter(FrameBlock frameBlockEnd)
     {
-        if (m_gameReady == false || m_frameBlockStart == null || frameBlockEnd == null)
+        if (m_isGameReady == false || m_isSwapping || 
+            m_frameBlockStart == null || frameBlockEnd == null)
         {
             return;
         }
 
-        if(m_frameBlockStart.GetColorBlockType() == BlockType.NONE || 
+        Debug.Log("FrameBlockPointerEnter");
+
+        if (m_frameBlockStart.GetColorBlockType() == BlockType.NONE || 
             frameBlockEnd.GetColorBlockType() == BlockType.NONE)
         {
             return;
@@ -204,35 +212,88 @@ public class IngameManager : MonoBehaviour
 
         if (m_frameBlockStart != frameBlockEnd)
         {
-            Swap(m_frameBlockStart, frameBlockEnd);
+            SwapAndCheckMatching(m_frameBlockStart, frameBlockEnd);
 
             m_frameBlockStart = null;
         }
     }
 
-    void Swap(FrameBlock frameBlock1, FrameBlock frameBlock2)
+    int m_moveCompleteCount = 0;
+    void SwapAndCheckMatching(FrameBlock frameBlock1, FrameBlock frameBlock2)
     {
+        m_isSwapping = true;
+        m_moveCompleteCount = 0;
+
+        bool isMatching = false;        
+
         ColorBlock colorBlock1 = frameBlock1.GetColorBlock();
+        frameBlock1.SetEmpty();
         ColorBlock colorBlock2 = frameBlock2.GetColorBlock();
+        frameBlock2.SetEmpty();
         frameBlock1.SetColorBlock(colorBlock2);
         frameBlock2.SetColorBlock(colorBlock1);
-        frameBlock1.GetColorBlock().SetPosition(frameBlock1.GetPosition());
-        frameBlock2.GetColorBlock().SetPosition(frameBlock2.GetPosition());
+        frameBlock1.GetColorBlock().StartMove(frameBlock1.GetPosition(),
+            () =>
+            {
+                m_moveCompleteCount++;
+                if(m_moveCompleteCount == 2)
+                {
+                    m_moveCompleteCount = 0;
 
-        //swap한 이후 매칭 체크, swap 이외에도 위치 변경 있을 경우 매칭 체크
-        CheckMatching(frameBlock1);
-        CheckMatching(frameBlock2);
+                    isMatching |= CheckMatching(frameBlock1);
+                    isMatching |= CheckMatching(frameBlock2);
+
+                    if (isMatching == false)
+                    {
+                        JustSwap(frameBlock1, frameBlock2);
+                    }
+
+                    m_isSwapping = false;
+                }                
+            });
+        frameBlock2.GetColorBlock().StartMove(frameBlock2.GetPosition(),
+            () =>
+            {
+                m_moveCompleteCount++;
+                if(m_moveCompleteCount == 2)
+                {
+                    m_moveCompleteCount = 0;
+
+                    isMatching |= CheckMatching(frameBlock1);
+                    isMatching |= CheckMatching(frameBlock2);
+
+                    if (isMatching == false)
+                    {
+                        JustSwap(frameBlock1, frameBlock2);
+                    }
+
+                    m_isSwapping = false;
+                }                
+            }
+            );
     }
 
-    bool m_matching = false;
+    void JustSwap(FrameBlock frameBlock1, FrameBlock frameBlock2)
+    {
+        ColorBlock colorBlock1 = frameBlock1.GetColorBlock();
+        frameBlock1.SetEmpty();
+        ColorBlock colorBlock2 = frameBlock2.GetColorBlock();
+        frameBlock2.SetEmpty();
+        frameBlock1.SetColorBlock(colorBlock2);
+        frameBlock2.SetColorBlock(colorBlock1);
+        frameBlock1.GetColorBlock().StartMove(frameBlock1.GetPosition());
+        frameBlock2.GetColorBlock().StartMove(frameBlock2.GetPosition());
+    }
+
+    //bool m_isMatching = false;
     List<FrameBlock> m_matchingList = new List<FrameBlock>();
     int m_tempMatchingCount = 0;
     List<FrameBlock> m_tempMatchingList = new List<FrameBlock>();     
 
-    void CheckMatching(FrameBlock frameBlock)
+    bool CheckMatching(FrameBlock frameBlock)
     {
         m_matchingList.Clear();
-        m_matching = false;
+        bool isMatching = false;
 
         BlockType checkBlockType = frameBlock.GetColorBlockType();
         Index index = frameBlock.GetIndex();
@@ -254,61 +315,63 @@ public class IngameManager : MonoBehaviour
 
         //LeftUp, Up
         //+ LeftUp_Up
-        CheckMatchingSquare(checkBlockType, index_leftUp, index_up, index_leftUp_up);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_leftUp, index_up, index_leftUp_up);
         //+ RightUp
-        CheckMatchingSquare(checkBlockType, index_leftUp, index_up, index_rightUp);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_leftUp, index_up, index_rightUp);
 
         //Up, RightUp
         //+ RightUp_Up
-        CheckMatchingSquare(checkBlockType, index_up, index_rightUp, index_rightUp_up);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_up, index_rightUp, index_rightUp_up);
         //+ RightDown
-        CheckMatchingSquare(checkBlockType, index_up, index_rightUp, index_rightDown);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_up, index_rightUp, index_rightDown);
 
         //RightUp, RightDown
         //+ RightUp_RightDown
-        CheckMatchingSquare(checkBlockType, index_rightUp, index_rightDown, index_rightUp_rightDown);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_rightUp, index_rightDown, index_rightUp_rightDown);
         //+ Down
-        CheckMatchingSquare(checkBlockType, index_rightUp, index_rightDown, index_down);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_rightUp, index_rightDown, index_down);
 
         //RightDown, Down
         //+ RightDown_Down
-        CheckMatchingSquare(checkBlockType, index_rightDown, index_down, index_rightDown_down);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_rightDown, index_down, index_rightDown_down);
         //+ LeftDown
-        CheckMatchingSquare(checkBlockType, index_rightDown, index_down, index_leftDown);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_rightDown, index_down, index_leftDown);
 
         //Down, LeftDown
         //+ LeftDown_Down
-        CheckMatchingSquare(checkBlockType, index_down, index_leftDown, index_leftDown_down);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_down, index_leftDown, index_leftDown_down);
         //+ LeftUp
-        CheckMatchingSquare(checkBlockType, index_down, index_leftDown, index_leftUp);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_down, index_leftDown, index_leftUp);
 
         //LeftDown, LeftUp
         //+ LeftDown_LeftUp
-        CheckMatchingSquare(checkBlockType, index_leftDown, index_leftUp, index_leftDown_leftUp);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_leftDown, index_leftUp, index_leftDown_leftUp);
         //+ Up
-        CheckMatchingSquare(checkBlockType, index_leftDown, index_leftUp, index_up);
+        isMatching |= CheckMatchingSquare(checkBlockType, index_leftDown, index_leftUp, index_up);
 
 
         //2. Straight
 
         //Up + Down
-        CheckMatchingStraight(checkBlockType, index, Direction.UP, Direction.DOWN);
+        isMatching |= CheckMatchingStraight(checkBlockType, index, Direction.UP, Direction.DOWN);
 
         //LeftUp + RightDown
-        CheckMatchingStraight(checkBlockType, index, Direction.LEFTUP, Direction.RIGHTDOWN);
+        isMatching |= CheckMatchingStraight(checkBlockType, index, Direction.LEFTUP, Direction.RIGHTDOWN);
 
         //LeftDown + RightUp
-        CheckMatchingStraight(checkBlockType, index, Direction.LEFTDOWN, Direction.RIGHTUP);
+        isMatching |= CheckMatchingStraight(checkBlockType, index, Direction.LEFTDOWN, Direction.RIGHTUP);
 
         //기준 블럭 포함하여 매칭블록 전체 제거
-        if (m_matching)
+        if (isMatching)
         {
             m_matchingList.Add(frameBlock);
             RemoveMathcingList();
         }
+
+        return isMatching;
     }
 
-    void CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction1, Direction direction2)
+    bool CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction1, Direction direction2)
     {
         m_tempMatchingCount = 0;
         m_tempMatchingList.Clear();
@@ -317,8 +380,10 @@ public class IngameManager : MonoBehaviour
         if (m_tempMatchingCount >= 2)
         {
             AddMatchingList();
-            m_matching = true;
+            return true;
         }
+
+        return false;
     }
 
     void CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction)//재귀
@@ -344,18 +409,18 @@ public class IngameManager : MonoBehaviour
         }
     }
 
-    void CheckMatchingSquare(BlockType checkBlockType, Index index1, Index index2, Index index3)
+    bool CheckMatchingSquare(BlockType checkBlockType, Index index1, Index index2, Index index3)
     {
         if (checkBlockType == BlockType.NONE || checkBlockType == BlockType.TOP)
         {
-            return;
+            return false;
         }
 
         if (IsOutOfIndex(index1, m_mapSizeX, m_mapSizeY) ||
             IsOutOfIndex(index2, m_mapSizeX, m_mapSizeY) ||
             IsOutOfIndex(index3, m_mapSizeX, m_mapSizeY))
         {
-            return;
+            return false;
         }
 
         BlockType blockType1 = m_frameBlockList[index1.X][index1.Y].GetColorBlockType();
@@ -371,8 +436,10 @@ public class IngameManager : MonoBehaviour
             m_tempMatchingList.Add(m_frameBlockList[index3.X][index3.Y]);
 
             AddMatchingList();
-            m_matching = true;
+            return true;
         }
+
+        return false;
     }
 
     Index CalcIndex(Index index, Direction direction)
@@ -436,7 +503,7 @@ public class IngameManager : MonoBehaviour
         for(int i = 0; i < m_matchingList.Count; ++i)
         {
             m_matchingList[i].GetColorBlock().SetPosition(new Vector3(0, 500, 0));
-            m_matchingList[i].SetColorBlock(null);//pyk
+            m_matchingList[i].SetEmpty();
         }
     }
 
