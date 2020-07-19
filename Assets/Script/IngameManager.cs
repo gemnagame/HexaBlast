@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class IngameManager : MonoBehaviour
@@ -10,10 +11,10 @@ public class IngameManager : MonoBehaviour
     public Transform m_frameAreaTrans;
     public Transform m_blockAreaTrans;
 
+    //ready
+    bool m_isGameReady = false;
     List<List<Frame>> m_allFrameList = new List<List<Frame>>();
     List<Block> m_allBlockList = new List<Block>();
-
-    bool m_isGameReady = false;
 
     //swap
     bool m_isSwapping = false;
@@ -24,6 +25,9 @@ public class IngameManager : MonoBehaviour
     List<Frame> m_matchingFrameList = new List<Frame>();    
     List<Frame> m_tempMatchingFrameList = new List<Frame>();
     int m_matchingStraightCount = 0;//pyk 함수 내 static 변수로 둘까
+
+    //drop
+    bool m_isDropping = false;
 
     void Awake()
     {
@@ -97,14 +101,8 @@ public class IngameManager : MonoBehaviour
         {
             for (int j = 0; j < Const.MAPSIZE_Y; ++j)
             {
-                BlockType blockType = BlockType.NONE;
-
                 int indexX = Const.MAPSIZE_Y - 1 - j;
-                //if(indexX >= 0 && indexX < m_mapSizeY)
-                //if(Util.IsOutOfIndex(indexX, m_mapSizeY) == false)//pyk 이부분 맞는지 체크 필요
-                {
-                    blockType = Const.MAPDESIGN[indexX, i];
-                }
+                BlockType blockType = Const.MAPDESIGN[indexX, i];                
 
                 m_allFrameList[i][j].Init(blockType != BlockType.NONE, new Index(i, j));
                 m_allFrameList[i][j].SetBlock(m_allBlockList[cou]);
@@ -148,7 +146,7 @@ public class IngameManager : MonoBehaviour
 
     public void FramePointerDown(Frame frameStart)
     {
-        if (m_isGameReady == false || m_isSwapping)
+        if (TouchBlocked())
         {
             return;
         }
@@ -160,7 +158,7 @@ public class IngameManager : MonoBehaviour
 
     public void FramePointerUp()
     {
-        if (m_isGameReady == false || m_isSwapping)
+        if (TouchBlocked())
         {
             return;
         }
@@ -172,7 +170,7 @@ public class IngameManager : MonoBehaviour
 
     public void FramePointerEnter(Frame frameEnd)
     {
-        if (m_isGameReady == false || m_isSwapping || 
+        if (TouchBlocked() || 
             m_frameStart == null || frameEnd == null)
         {
             return;
@@ -209,9 +207,9 @@ public class IngameManager : MonoBehaviour
         frame1.SetBlock(block2);
         frame2.SetBlock(block1);
         frame1.GetBlock().StartMove(frame1.GetPosition(),
-            () => EndSwapAction(isMatching, frame1, frame2));
+            ()=> EndSwapAction(isMatching, frame1, frame2));
         frame2.GetBlock().StartMove(frame2.GetPosition(),
-            () => EndSwapAction(isMatching, frame1, frame2));
+            ()=> EndSwapAction(isMatching, frame1, frame2));
 
         isMatching |= CheckMatching(frame1);
         isMatching |= CheckMatching(frame2);
@@ -230,7 +228,7 @@ public class IngameManager : MonoBehaviour
                 m_isSwapping = false;
                 Debug.Log("스왑 종료");
 
-                FillEmptyArea();
+                BlockDrop();
             }
             else
             {
@@ -350,8 +348,8 @@ public class IngameManager : MonoBehaviour
     {
         m_matchingStraightCount = 0;
         m_tempMatchingFrameList.Clear();
-        CheckMatchingStraight(checkBlockType, index, direction1);
-        CheckMatchingStraight(checkBlockType, index, direction2);
+        CheckMatchingStraight_Recursive(checkBlockType, index, direction1);
+        CheckMatchingStraight_Recursive(checkBlockType, index, direction2);
         if (m_matchingStraightCount >= 2)
         {
             AddMatchingList(m_tempMatchingFrameList);
@@ -361,26 +359,26 @@ public class IngameManager : MonoBehaviour
         return false;
     }
 
-    void CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction)//재귀
+    void CheckMatchingStraight_Recursive(BlockType checkBlockType, Index index, Direction direction)//재귀
     {
         if (checkBlockType == BlockType.NONE || checkBlockType == BlockType.TOP)
         {
             return;
         }
 
-        Index newIndex = Util.CalcIndex(index, direction);
-        if (Util.IsOutOfIndex(newIndex, Const.MAPSIZE_X, Const.MAPSIZE_Y))
+        Index calcIndex = Util.CalcIndex(index, direction);
+        if (Util.IsOutOfIndex(calcIndex, Const.MAPSIZE_X, Const.MAPSIZE_Y))
         {
             return;
         }
 
-        BlockType blockType = m_allFrameList[newIndex.X][newIndex.Y].GetBlockType();
+        BlockType blockType = m_allFrameList[calcIndex.X][calcIndex.Y].GetBlockType();
         if (blockType == checkBlockType)
         {
             m_matchingStraightCount++;
-            m_tempMatchingFrameList.Add(m_allFrameList[newIndex.X][newIndex.Y]);
+            m_tempMatchingFrameList.Add(m_allFrameList[calcIndex.X][calcIndex.Y]);
 
-            CheckMatchingStraight(checkBlockType, newIndex, direction);
+            CheckMatchingStraight_Recursive(checkBlockType, calcIndex, direction);
         }
     }
 
@@ -440,18 +438,91 @@ public class IngameManager : MonoBehaviour
         m_matchingFrameList.Clear();
     }
 
-    void FillEmptyArea()
+    void BlockDrop()
     {
-        for (int i = 0; i < m_allFrameList.Count; ++i)
-        {
-            for (int j = 0; j < m_allFrameList[i].Count; ++j)
-            {
-                if (m_allFrameList[i][j])
-                {
-                    //빈 곳 채우기
+        m_isDropping = true;//pyk 이건, BlockDrop_Recursive 모든 요소가 끝났을 때 + 입구에 밀어넣을 블럭 없을 때 false 해주기
 
-                }
+        //pyk 아래줄부터(나중에 i, j 순으로 해서 테스트도 해보기
+        for (int j = 0; j < Const.MAPSIZE_Y; ++j)
+        {
+            for (int i = 0; i < Const.MAPSIZE_X; ++i)
+            {
+                var frame = m_allFrameList[i][j];
+                BlockDrop_Recursive(frame);
             }
         }
+    }
+
+    void BlockDrop_Recursive(Frame frame)
+    {
+        //방법1
+        if (frame.IsMoveable())
+        {
+            /*
+             * 아래쪽 프레임 인덱스부터 돌면서 아래 셋 중 하나 해당하면 해당 위치로 이동
+            1.내 아래쪽 비었음
+            2.왼쪽아래 비었음 + 왼쪽위 블럭이 이동불가
+            3.오른쪽아래 비었음 + 오른쪽위 블럭이 이동불가
+             */
+
+            Index index = frame.GetIndex();
+            Frame frame_down = GetFrameByDir(index, Direction.DOWN);
+            Frame frame_leftDown = GetFrameByDir(index, Direction.LEFTDOWN);
+            Frame frame_leftUp = GetFrameByDir(index, Direction.LEFTUP);
+            Frame frame_rightDown = GetFrameByDir(index, Direction.RIGHTDOWN);
+            Frame frame_rightUp = GetFrameByDir(index, Direction.RIGHTUP);
+
+            if (frame_down && frame_down.IsEmpty())
+            {
+                MoveBlockToFrame(frame, frame_down, 
+                    ()=> BlockDrop_Recursive(frame_down));
+            }
+            else if (frame_leftDown && frame_leftDown.IsEmpty() &&
+                (frame_leftUp == null || frame_leftUp.IsMoveable() == false))
+            {
+                MoveBlockToFrame(frame, frame_leftDown,
+                    ()=> BlockDrop_Recursive(frame_leftDown));
+            }
+            else if (frame_rightDown && frame_rightDown.IsEmpty() &&
+                (frame_rightUp == null || frame_rightUp.IsMoveable() == false))
+            {
+                MoveBlockToFrame(frame, frame_rightDown,
+                    () => BlockDrop_Recursive(frame_rightDown));
+            }
+            else
+            {
+                
+                //재귀 끝!!!!!!!!!!!!!!!!!
+            }
+        }
+    }
+
+    Frame GetFrameByDir(Index index, Direction dir)
+    {
+        Index calcIndex = Util.CalcIndex(index, dir);//pyk 기존에 calcindex로 하던거 GetFrameByDir 함수로 변경 가능하면 변경하자
+        return GetFrameByIndex(calcIndex);
+    }
+
+    Frame GetFrameByIndex(Index index)
+    {
+        if (Util.IsOutOfIndex(index, Const.MAPSIZE_X, Const.MAPSIZE_Y))
+        {
+            //Debug.LogError("GetFrameByIndex : IsOutOfIndex");
+            return null;
+        }
+
+        return m_allFrameList[index.X][index.Y];
+    }
+
+    bool TouchBlocked()
+    {
+        return m_isGameReady == false || m_isSwapping || m_isDropping;
+    }
+
+    void MoveBlockToFrame(Frame fromFrame, Frame toFrame, Action endMovevAction)
+    {
+        toFrame.SetBlock(fromFrame.GetBlock());
+        fromFrame.SetEmpty();
+        toFrame.GetBlock().StartMove(toFrame.GetPosition(), endMovevAction);
     }
 }

@@ -41,7 +41,7 @@ public class Block : MonoBehaviour
         transform.localPosition = position;
     }
 
-    public void StartMove(Vector3 moveTargetPosition, Action endMoveAction = null)
+    public void StartMove(Vector3 moveTargetPosition, Action endMoveAction)// = null)
     {
         if(m_moving)
         {

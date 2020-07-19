@@ -1,19 +1,20 @@
-﻿using UnityEngine;
+﻿using System.Diagnostics.Tracing;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class Frame : MonoBehaviour
 {
     public Text m_debugLabel;//pyk 추후 제거
 
-    bool m_active = false;//pyk 추후 불필요시 제거
+    bool m_active = false;
     Index m_index;
     Block m_block = null;
 
     public void Init(bool active, Index index)
     {
-        SetEmpty();
         m_active = active;
-        m_index = index;        
+        m_index = index;
+        m_block = null;
 
         gameObject.SetActive(true);// active);//pyk test
 
@@ -53,6 +54,21 @@ public class Frame : MonoBehaviour
     public void SetEmpty()
     {
         m_block = null;
+    }
+
+    public bool IsEmpty()
+    {
+        return m_block == null;
+    }
+
+    public bool IsMoveable()
+    {
+        return m_block && m_block.GetBlockType() != BlockType.NONE;
+    }
+
+    public bool IsActive()
+    {
+        return m_active;
     }
 
     public Vector3 GetPosition()

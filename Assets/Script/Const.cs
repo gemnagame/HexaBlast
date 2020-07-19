@@ -6,7 +6,7 @@ static class Const
     public const float FRAME_IMAGE_WIDTH = 90f;
     public const float FRAME_IMAGE_HEIGHT = 90f;
 
-    public const float BLOCK_MOVE_SPEED = 100f;
+    public const float BLOCK_MOVE_SPEED = 10f;
 
     //public static BlockType[,] MAPDESIGN = new BlockType[,]
     //    { 
