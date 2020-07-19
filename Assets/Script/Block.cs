@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ColorBlock : MonoBehaviour
+public class Block : MonoBehaviour
 {
     public Image m_imageBlock;
 

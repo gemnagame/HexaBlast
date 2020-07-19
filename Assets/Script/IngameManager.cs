@@ -5,19 +5,19 @@ public class IngameManager : MonoBehaviour
 {
     public static IngameManager Instance = null;
 
-    public GameObject m_frameBlockOrigin;
-    public GameObject m_colorBlockOrigin;
-    public Transform m_frameBlockAreaTrans;
-    public Transform m_colorBlockAreaTrans;
+    public GameObject m_frameOrigin;
+    public GameObject m_blockOrigin;
+    public Transform m_frameAreaTrans;
+    public Transform m_blockAreaTrans;
 
     bool m_isGameReady = false;
     bool m_isSwapping = false;
 
-    List<List<FrameBlock>> m_frameBlockList = new List<List<FrameBlock>>();
+    List<List<Frame>> m_allFrameList = new List<List<Frame>>();
     float m_imageWidth = 70f;
     float m_imageHeight = 70f;
 
-    List<ColorBlock> m_colorBlockList = new List<ColorBlock>();
+    List<Block> m_allBlockList = new List<Block>();
 
     //BlockType[,] m_mapDesign = new BlockType[,]
     //    { 
@@ -49,14 +49,25 @@ public class IngameManager : MonoBehaviour
         else if (Instance != this)
         {
             Destroy(gameObject);
+        }        
+
+        CreateObjectOnce();        
+    }
+
+    void CreateObjectOnce()
+    {
+        if(m_allBlockList.Count > 0 || m_allFrameList.Count > 0)
+        {
+            Debug.LogError("CreateObjectOnce : m_allBlockList.Count > 0 || m_allFrameList.Count > 0");
+            return;
         }
 
-        if (m_frameBlockOrigin == null || m_colorBlockOrigin == null || m_frameBlockAreaTrans == null || m_colorBlockAreaTrans == null)
+        if (m_frameOrigin == null || m_blockOrigin == null || m_frameAreaTrans == null || m_blockAreaTrans == null)
         {
             return;
         }
 
-        RectTransform rectTransform = m_frameBlockOrigin.GetComponent<RectTransform>();
+        RectTransform rectTransform = m_frameOrigin.GetComponent<RectTransform>();
         if (rectTransform)
         {
             m_imageWidth = rectTransform.rect.width;
@@ -66,29 +77,28 @@ public class IngameManager : MonoBehaviour
         m_mapSizeX = m_mapDesign.GetLength(1);//7
         m_mapSizeY = m_mapDesign.GetLength(0);//6
 
-
-        //pyk for문 함수로 빼자. 1회만 생성, 이후 게임 재시작시 생성된 블럭들 재이용
+        //1회만 생성, 이후 게임 재시작시 생성된 블럭들 재이용
         for (int i = 0; i < m_mapSizeX; ++i)
         {
-            m_frameBlockList.Add(new List<FrameBlock>());
+            m_allFrameList.Add(new List<Frame>());
 
             for (int j = 0; j < m_mapSizeY; ++j)
             {
                 Vector3 position = CalcPositionByIndex(i, j);
 
-                GameObject obj = Instantiate(m_frameBlockOrigin, position, Quaternion.identity, m_frameBlockAreaTrans);
+                GameObject obj = Instantiate(m_frameOrigin, position, Quaternion.identity, m_frameAreaTrans);
                 if (obj)
                 {
-                    FrameBlock frameBlock = obj.GetComponent<FrameBlock>();
-                    m_frameBlockList[i].Add(frameBlock);
+                    Frame frame = obj.GetComponent<Frame>();
+                    m_allFrameList[i].Add(frame);
                 }
 
-                //obj = Instantiate(m_colorBlockOrigin, position, Quaternion.identity, m_puzzleAreaTrans);
-                obj = Instantiate(m_colorBlockOrigin, m_colorBlockAreaTrans);
+                //obj = Instantiate(m_blockOrigin, position, Quaternion.identity, m_blockAreaTrans);
+                obj = Instantiate(m_blockOrigin, m_blockAreaTrans);
                 if (obj)
                 {
-                    ColorBlock colorBlock = obj.GetComponent<ColorBlock>();
-                    m_colorBlockList.Add(colorBlock);
+                    Block block = obj.GetComponent<Block>();
+                    m_allBlockList.Add(block);
                 }
             }
         }
@@ -115,11 +125,11 @@ public class IngameManager : MonoBehaviour
                     blockType = m_mapDesign[indexX, i];
                 }
 
-                m_frameBlockList[i][j].Init(blockType != BlockType.NONE, new Index(i, j));
-                m_frameBlockList[i][j].SetColorBlock(m_colorBlockList[cou]);
+                m_allFrameList[i][j].Init(blockType != BlockType.NONE, new Index(i, j));
+                m_allFrameList[i][j].SetBlock(m_allBlockList[cou]);
 
-                m_colorBlockList[cou].Init(blockType);
-                m_colorBlockList[cou].SetPosition(m_frameBlockList[i][j].GetPosition());
+                m_allBlockList[cou].Init(blockType);
+                m_allBlockList[cou].SetPosition(m_allFrameList[i][j].GetPosition());
 
                 cou++;
             }
@@ -135,25 +145,22 @@ public class IngameManager : MonoBehaviour
 
     void OnDestroy()
     {
-        Debug.Log("m_frameBlockList.Count : " + m_frameBlockList.Count);
-        for (int i = 0; i < m_frameBlockList.Count; ++i)
-        {
-            Debug.Log("m_frameBlockList[i].Count : " + m_frameBlockList[i].Count);
-            for (int j = 0; j < m_frameBlockList[i].Count; ++j)
+        for (int i = 0; i < m_allFrameList.Count; ++i)
+        {        
+            for (int j = 0; j < m_allFrameList[i].Count; ++j)
             {
-                if (m_frameBlockList[i][j])
+                if (m_allFrameList[i][j])
                 {
-                    Destroy(m_frameBlockList[i][j].gameObject);
+                    Destroy(m_allFrameList[i][j].gameObject);
                 }
             }
         }
 
-        Debug.Log("m_colorBlockList.Count : " + m_colorBlockList.Count);
-        for (int i = 0; i < m_colorBlockList.Count; ++i)
+        for (int i = 0; i < m_allBlockList.Count; ++i)
         {
-            if (m_colorBlockList[i])
+            if (m_allBlockList[i])
             {
-                Destroy(m_colorBlockList[i].gameObject);
+                Destroy(m_allBlockList[i].gameObject);
             }
         }
     }
@@ -169,134 +176,122 @@ public class IngameManager : MonoBehaviour
         return position;
     }
 
-    FrameBlock m_frameBlockStart = null;
-    public void FrameBlockPointerDown(FrameBlock frameBlockStart)
+    Frame m_frameStart = null;
+    public void FramePointerDown(Frame frameStart)
     {
         if (m_isGameReady == false || m_isSwapping)
         {
             return;
         }
 
-        Debug.Log("FrameBlockPointerDown");
+        Debug.Log("FramePointerDown");
 
-        m_frameBlockStart = frameBlockStart;
+        m_frameStart = frameStart;
     }
 
-    public void FrameBlockPointerUp()
+    public void FramePointerUp()
     {
         if (m_isGameReady == false || m_isSwapping)
         {
             return;
         }
 
-        Debug.Log("FrameBlockPointerUp");
+        Debug.Log("FramePointerUp");
 
-        m_frameBlockStart = null;
+        m_frameStart = null;
     }
 
-    public void FrameBlockPointerEnter(FrameBlock frameBlockEnd)
+    public void FramePointerEnter(Frame frameEnd)
     {
         if (m_isGameReady == false || m_isSwapping || 
-            m_frameBlockStart == null || frameBlockEnd == null)
+            m_frameStart == null || frameEnd == null)
         {
             return;
         }
 
-        Debug.Log("FrameBlockPointerEnter");
+        Debug.Log("FramePointerEnter");
 
-        if (m_frameBlockStart.GetColorBlockType() == BlockType.NONE || 
-            frameBlockEnd.GetColorBlockType() == BlockType.NONE)
+        if (m_frameStart.GetBlockType() == BlockType.NONE || 
+            frameEnd.GetBlockType() == BlockType.NONE)
         {
             return;
         }
 
-        if (m_frameBlockStart != frameBlockEnd)
+        if (m_frameStart != frameEnd)
         {
-            SwapAndCheckMatching(m_frameBlockStart, frameBlockEnd);
+            SwapAndCheckMatching(m_frameStart, frameEnd);
 
-            m_frameBlockStart = null;
+            m_frameStart = null;
         }
     }
 
     int m_moveCompleteCount = 0;
-    void SwapAndCheckMatching(FrameBlock frameBlock1, FrameBlock frameBlock2)
+    void SwapAndCheckMatching(Frame frame1, Frame frame2)
     {
         m_isSwapping = true;
         m_moveCompleteCount = 0;
 
         bool isMatching = false;        
 
-        ColorBlock colorBlock1 = frameBlock1.GetColorBlock();
-        frameBlock1.SetEmpty();
-        ColorBlock colorBlock2 = frameBlock2.GetColorBlock();
-        frameBlock2.SetEmpty();
-        frameBlock1.SetColorBlock(colorBlock2);
-        frameBlock2.SetColorBlock(colorBlock1);
-        frameBlock1.GetColorBlock().StartMove(frameBlock1.GetPosition(),
-            () =>
-            {
-                m_moveCompleteCount++;
-                if(m_moveCompleteCount == 2)
-                {
-                    m_moveCompleteCount = 0;
+        Block block1 = frame1.GetBlock();
+        frame1.SetEmpty();
+        Block block2 = frame2.GetBlock();
+        frame2.SetEmpty();
+        frame1.SetBlock(block2);
+        frame2.SetBlock(block1);
+        frame1.GetBlock().StartMove(frame1.GetPosition(),
+            () => EndSwapAction(isMatching, frame1, frame2));
+        frame2.GetBlock().StartMove(frame2.GetPosition(),
+            () => EndSwapAction(isMatching, frame1, frame2));
 
-                    isMatching |= CheckMatching(frameBlock1);
-                    isMatching |= CheckMatching(frameBlock2);
-
-                    if (isMatching == false)
-                    {
-                        JustSwap(frameBlock1, frameBlock2);
-                    }
-
-                    m_isSwapping = false;
-                }                
-            });
-        frameBlock2.GetColorBlock().StartMove(frameBlock2.GetPosition(),
-            () =>
-            {
-                m_moveCompleteCount++;
-                if(m_moveCompleteCount == 2)
-                {
-                    m_moveCompleteCount = 0;
-
-                    isMatching |= CheckMatching(frameBlock1);
-                    isMatching |= CheckMatching(frameBlock2);
-
-                    if (isMatching == false)
-                    {
-                        JustSwap(frameBlock1, frameBlock2);
-                    }
-
-                    m_isSwapping = false;
-                }                
-            }
-            );
+        isMatching |= CheckMatching(frame1);
+        isMatching |= CheckMatching(frame2);
     }
 
-    void JustSwap(FrameBlock frameBlock1, FrameBlock frameBlock2)
+    void EndSwapAction(bool isMatching, Frame frame1, Frame frame2)
     {
-        ColorBlock colorBlock1 = frameBlock1.GetColorBlock();
-        frameBlock1.SetEmpty();
-        ColorBlock colorBlock2 = frameBlock2.GetColorBlock();
-        frameBlock2.SetEmpty();
-        frameBlock1.SetColorBlock(colorBlock2);
-        frameBlock2.SetColorBlock(colorBlock1);
-        frameBlock1.GetColorBlock().StartMove(frameBlock1.GetPosition());
-        frameBlock2.GetColorBlock().StartMove(frameBlock2.GetPosition());
+        m_moveCompleteCount++;
+        if (m_moveCompleteCount == 2)
+        {
+            m_moveCompleteCount = 0;
+
+            if (isMatching)
+            {
+                RemoveMathcingList();
+            }
+            else
+            {
+                JustSwap(frame1, frame2);
+            }
+
+            m_isSwapping = false;
+        }
+    }
+
+    void JustSwap(Frame frame1, Frame frame2)
+    {
+        Block block1 = frame1.GetBlock();
+        frame1.SetEmpty();
+        Block block2 = frame2.GetBlock();
+        frame2.SetEmpty();
+        frame1.SetBlock(block2);
+        frame2.SetBlock(block1);
+        frame1.GetBlock().StartMove(frame1.GetPosition());
+        frame2.GetBlock().StartMove(frame2.GetPosition());
     }
 
     //bool m_isMatching = false;
-    List<FrameBlock> m_matchingList = new List<FrameBlock>();
-    int m_tempMatchingCount = 0;
-    List<FrameBlock> m_tempMatchingList = new List<FrameBlock>();     
+    List<Frame> m_matchingFrameList = new List<Frame>();
+    int m_matchingStraightCount = 0;
+    List<Frame> m_tempMatchingFrameList = new List<Frame>();     
 
-    bool CheckMatching(FrameBlock frameBlock)
+    bool CheckMatching(Frame frame)
     {
-        m_matchingList.Clear();
+        //m_matchingFrameList.Clear();
         bool isMatching = false;
 
-        BlockType checkBlockType = frameBlock.GetColorBlockType();
-        Index index = frameBlock.GetIndex();
+        BlockType checkBlockType = frame.GetBlockType();
+        Index index = frame.GetIndex();
 
         //1. Square
 
@@ -361,11 +356,11 @@ public class IngameManager : MonoBehaviour
         //LeftDown + RightUp
         isMatching |= CheckMatchingStraight(checkBlockType, index, Direction.LEFTDOWN, Direction.RIGHTUP);
 
-        //기준 블럭 포함하여 매칭블록 전체 제거
         if (isMatching)
         {
-            m_matchingList.Add(frameBlock);
-            RemoveMathcingList();
+            AddMatchingList(new List<Frame> { frame });
+            //    m_matchingFrameList.Add(frame);
+            //    RemoveMathcingList();
         }
 
         return isMatching;
@@ -373,13 +368,13 @@ public class IngameManager : MonoBehaviour
 
     bool CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction1, Direction direction2)
     {
-        m_tempMatchingCount = 0;
-        m_tempMatchingList.Clear();
+        m_matchingStraightCount = 0;
+        m_tempMatchingFrameList.Clear();
         CheckMatchingStraight(checkBlockType, index, direction1);
         CheckMatchingStraight(checkBlockType, index, direction2);
-        if (m_tempMatchingCount >= 2)
+        if (m_matchingStraightCount >= 2)
         {
-            AddMatchingList();
+            AddMatchingList(m_tempMatchingFrameList);
             return true;
         }
 
@@ -399,11 +394,11 @@ public class IngameManager : MonoBehaviour
             return;
         }
 
-        BlockType blockType = m_frameBlockList[newIndex.X][newIndex.Y].GetColorBlockType();
+        BlockType blockType = m_allFrameList[newIndex.X][newIndex.Y].GetBlockType();
         if (blockType == checkBlockType)
         {
-            m_tempMatchingCount++;
-            m_tempMatchingList.Add(m_frameBlockList[newIndex.X][newIndex.Y]);
+            m_matchingStraightCount++;
+            m_tempMatchingFrameList.Add(m_allFrameList[newIndex.X][newIndex.Y]);
 
             CheckMatchingStraight(checkBlockType, newIndex, direction);
         }
@@ -423,19 +418,19 @@ public class IngameManager : MonoBehaviour
             return false;
         }
 
-        BlockType blockType1 = m_frameBlockList[index1.X][index1.Y].GetColorBlockType();
-        BlockType blockType2 = m_frameBlockList[index2.X][index2.Y].GetColorBlockType();
-        BlockType blockType3 = m_frameBlockList[index3.X][index3.Y].GetColorBlockType();
+        BlockType blockType1 = m_allFrameList[index1.X][index1.Y].GetBlockType();
+        BlockType blockType2 = m_allFrameList[index2.X][index2.Y].GetBlockType();
+        BlockType blockType3 = m_allFrameList[index3.X][index3.Y].GetBlockType();
         if (blockType1 == checkBlockType &&
             blockType2 == checkBlockType &&
             blockType3 == checkBlockType)
         {
-            m_tempMatchingList.Clear();
-            m_tempMatchingList.Add(m_frameBlockList[index1.X][index1.Y]);
-            m_tempMatchingList.Add(m_frameBlockList[index2.X][index2.Y]);
-            m_tempMatchingList.Add(m_frameBlockList[index3.X][index3.Y]);
+            m_tempMatchingFrameList.Clear();
+            m_tempMatchingFrameList.Add(m_allFrameList[index1.X][index1.Y]);
+            m_tempMatchingFrameList.Add(m_allFrameList[index2.X][index2.Y]);
+            m_tempMatchingFrameList.Add(m_allFrameList[index3.X][index3.Y]);
+            AddMatchingList(m_tempMatchingFrameList);
 
-            AddMatchingList();
             return true;
         }
 
@@ -486,25 +481,27 @@ public class IngameManager : MonoBehaviour
         return index;
     }
 
-    void AddMatchingList()
+    void AddMatchingList(List<Frame> frameList)
     {
-        for(int i = 0; i < m_tempMatchingList.Count; ++i)
+        for(int i = 0; i < frameList.Count; ++i)
         {
             //중복 방지
-            if(m_matchingList.Contains(m_tempMatchingList[i]) == false)
+            if(m_matchingFrameList.Contains(frameList[i]) == false)
             {
-                m_matchingList.Add(m_tempMatchingList[i]);
+                m_matchingFrameList.Add(frameList[i]);
             }
         }
     }
 
     void RemoveMathcingList()
     {
-        for(int i = 0; i < m_matchingList.Count; ++i)
+        for(int i = 0; i < m_matchingFrameList.Count; ++i)
         {
-            m_matchingList[i].GetColorBlock().SetPosition(new Vector3(0, 500, 0));
-            m_matchingList[i].SetEmpty();
+            m_matchingFrameList[i].GetBlock().SetPosition(new Vector3(0, 500, 0));
+            m_matchingFrameList[i].SetEmpty();
         }
+
+        m_matchingFrameList.Clear();
     }
 
     bool IsOutOfIndex(Index index, int arraySizeX, int arraySizeY)

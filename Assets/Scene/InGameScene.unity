@@ -214,7 +214,7 @@ GameObject:
   m_Component:
   - component: {fileID: 696498121}
   m_Layer: 5
-  m_Name: ColorBlockArea
+  m_Name: BlockArea
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -493,10 +493,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96682bf8cb5dce44984358fbe7c70a60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_frameBlockOrigin: {fileID: 2525375664068081044}
-  m_colorBlockOrigin: {fileID: 766799447317690961}
-  m_frameBlockAreaTrans: {fileID: 1944151491}
-  m_colorBlockAreaTrans: {fileID: 696498121}
+  m_frameOrigin: {fileID: 2525375664068081044}
+  m_blockOrigin: {fileID: 766799447317690961}
+  m_frameAreaTrans: {fileID: 1944151491}
+  m_blockAreaTrans: {fileID: 696498121}
 --- !u!1 &1944151490
 GameObject:
   m_ObjectHideFlags: 0
@@ -507,7 +507,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1944151491}
   m_Layer: 5
-  m_Name: FrameBlockArea
+  m_Name: FrameArea
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -549,7 +549,7 @@ PrefabInstance:
     - target: {fileID: 4186956263018693056, guid: e8852cc44bc24e341883b35678e8e5f7,
         type: 3}
       propertyPath: m_Name
-      value: FameBolck
+      value: Fame
       objectReference: {fileID: 0}
     - target: {fileID: 4725714037656261888, guid: e8852cc44bc24e341883b35678e8e5f7,
         type: 3}
@@ -680,7 +680,7 @@ PrefabInstance:
     - target: {fileID: 3327064668949062979, guid: e4e614403f93a794cb31fd8077e34be5,
         type: 3}
       propertyPath: m_Name
-      value: ColorBolck
+      value: Bolck
       objectReference: {fileID: 0}
     - target: {fileID: 6170510764331348355, guid: e4e614403f93a794cb31fd8077e34be5,
         type: 3}

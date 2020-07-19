@@ -1,13 +1,13 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-public class FrameBlock : MonoBehaviour
+public class Frame : MonoBehaviour
 {
     public Text m_debugLabel;//pyk 추후 제거
 
     bool m_active = false;//pyk 추후 불필요시 제거
     Index m_index;
-    ColorBlock m_colorBlock = null;
+    Block m_block = null;
 
     public void Init(bool active, Index index)
     {
@@ -23,36 +23,36 @@ public class FrameBlock : MonoBehaviour
         }
     }
 
-    public void SetColorBlock(ColorBlock colorBlock)
+    public void SetBlock(Block block)
     {
-        if (m_colorBlock != null)
+        if (m_block != null)
         {
-            Debug.LogError("SetColorBlock() : m_colorBlock != null");
+            Debug.LogError("SetBlock() : m_block != null");
 
             return;
         }
 
-        m_colorBlock = colorBlock;
+        m_block = block;
     }
 
-    public ColorBlock GetColorBlock()
+    public Block GetBlock()
     {
-        return m_colorBlock;
+        return m_block;
     }
 
-    public BlockType GetColorBlockType()
+    public BlockType GetBlockType()
     {
-        if(m_colorBlock == null)
+        if(m_block == null)
         {
             return BlockType.NONE;
         }
 
-        return m_colorBlock.GetBlockType();
+        return m_block.GetBlockType();
     }
 
     public void SetEmpty()
     {
-        m_colorBlock = null;
+        m_block = null;
     }
 
     public Vector3 GetPosition()
@@ -67,16 +67,16 @@ public class FrameBlock : MonoBehaviour
 
     public void On_PointerDown()
     {
-        IngameManager.Instance.FrameBlockPointerDown(this);
+        IngameManager.Instance.FramePointerDown(this);
     }
 
     public void On_PointerUp()//다른 오브젝트 엔터 전에 마우스 떼면 끝나도록(버그 방지)
     {
-        IngameManager.Instance.FrameBlockPointerUp();
+        IngameManager.Instance.FramePointerUp();
     }
 
     public void On_PointerEnter()
     {
-        IngameManager.Instance.FrameBlockPointerEnter(this);
+        IngameManager.Instance.FramePointerEnter(this);
     }
 }
