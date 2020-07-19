@@ -10,35 +10,20 @@ public class IngameManager : MonoBehaviour
     public Transform m_frameAreaTrans;
     public Transform m_blockAreaTrans;
 
-    bool m_isGameReady = false;
-    bool m_isSwapping = false;
-
     List<List<Frame>> m_allFrameList = new List<List<Frame>>();
-    float m_imageWidth = 70f;
-    float m_imageHeight = 70f;
-
     List<Block> m_allBlockList = new List<Block>();
 
-    //BlockType[,] m_mapDesign = new BlockType[,]
-    //    { 
-    //        {BlockType.NONE, BlockType.NONE, BlockType.NONE, BlockType.PURPLE, BlockType.NONE, BlockType.NONE, BlockType.NONE},
-    //        {BlockType.NONE, BlockType.ORANGE, BlockType.GREEN, BlockType.RED, BlockType.YELLOW, BlockType.RED, BlockType.NONE},
-    //        {BlockType.YELLOW, BlockType.PURPLE, BlockType.TOP, BlockType.YELLOW, BlockType.ORANGE, BlockType.TOP, BlockType.GREEN},
-    //        {BlockType.GREEN, BlockType.PURPLE, BlockType.YELLOW, BlockType.BLUE, BlockType.RED, BlockType.PURPLE, BlockType.YELLOW},
-    //        {BlockType.BLUE, BlockType.TOP, BlockType.YELLOW, BlockType.PURPLE, BlockType.GREEN, BlockType.PURPLE, BlockType.GREEN},
-    //        {BlockType.NONE, BlockType.NONE, BlockType.TOP, BlockType.TOP, BlockType.TOP, BlockType.NONE, BlockType.NONE}
-    //    };
-    BlockType[,] m_mapDesign = new BlockType[,]
-        {
-            {BlockType.NONE, BlockType.NONE, BlockType.NONE, BlockType.RED, BlockType.NONE, BlockType.NONE, BlockType.NONE},
-            {BlockType.NONE, BlockType.YELLOW, BlockType.GREEN, BlockType.PURPLE, BlockType.YELLOW, BlockType.RED, BlockType.NONE},
-            {BlockType.PURPLE, BlockType.TOP, BlockType.PURPLE, BlockType.BLUE, BlockType.PURPLE, BlockType.PURPLE, BlockType.GREEN},
-            {BlockType.TOP, BlockType.GREEN, BlockType.PURPLE, BlockType.YELLOW, BlockType.YELLOW, BlockType.GREEN, BlockType.YELLOW},
-            {BlockType.GREEN, BlockType.BLUE, BlockType.BLUE, BlockType.TOP, BlockType.BLUE, BlockType.GREEN, BlockType.GREEN},
-            {BlockType.NONE, BlockType.NONE, BlockType.BLUE, BlockType.TOP, BlockType.PURPLE, BlockType.NONE, BlockType.NONE}
-        };
-    int m_mapSizeX = 0;
-    int m_mapSizeY = 0;
+    bool m_isGameReady = false;
+
+    //swap
+    bool m_isSwapping = false;
+    Frame m_frameStart = null;
+    int m_moveCompleteCount = 0;
+
+    //matching
+    List<Frame> m_matchingFrameList = new List<Frame>();    
+    List<Frame> m_tempMatchingFrameList = new List<Frame>();
+    int m_matchingStraightCount = 0;//pyk 함수 내 static 변수로 둘까
 
     void Awake()
     {
@@ -70,21 +55,17 @@ public class IngameManager : MonoBehaviour
         RectTransform rectTransform = m_frameOrigin.GetComponent<RectTransform>();
         if (rectTransform)
         {
-            m_imageWidth = rectTransform.rect.width;
-            m_imageHeight = rectTransform.rect.height;
+            rectTransform.sizeDelta = new Vector2(Const.FRAME_IMAGE_WIDTH, Const.FRAME_IMAGE_HEIGHT);
         }
 
-        m_mapSizeX = m_mapDesign.GetLength(1);//7
-        m_mapSizeY = m_mapDesign.GetLength(0);//6
-
         //1회만 생성, 이후 게임 재시작시 생성된 블럭들 재이용
-        for (int i = 0; i < m_mapSizeX; ++i)
+        for (int i = 0; i < Const.MAPSIZE_X; ++i)
         {
             m_allFrameList.Add(new List<Frame>());
 
-            for (int j = 0; j < m_mapSizeY; ++j)
+            for (int j = 0; j < Const.MAPSIZE_Y; ++j)
             {
-                Vector3 position = CalcPositionByIndex(i, j);
+                Vector3 position = Util.CalcPositionByIndex(i, j);
 
                 GameObject obj = Instantiate(m_frameOrigin, position, Quaternion.identity, m_frameAreaTrans);
                 if (obj)
@@ -112,17 +93,17 @@ public class IngameManager : MonoBehaviour
     void SetMapDesign()
     {
         int cou = 0;
-        for (int i = 0; i < m_mapSizeX; ++i)
+        for (int i = 0; i < Const.MAPSIZE_X; ++i)
         {
-            for (int j = 0; j < m_mapSizeY; ++j)
+            for (int j = 0; j < Const.MAPSIZE_Y; ++j)
             {
                 BlockType blockType = BlockType.NONE;
 
-                int indexX = m_mapSizeY - 1 - j;
+                int indexX = Const.MAPSIZE_Y - 1 - j;
                 //if(indexX >= 0 && indexX < m_mapSizeY)
-                //if(IsOutOfIndex(indexX, m_mapSizeY) == false)//pyk 이부분 맞는지 체크 필요
+                //if(Util.IsOutOfIndex(indexX, m_mapSizeY) == false)//pyk 이부분 맞는지 체크 필요
                 {
-                    blockType = m_mapDesign[indexX, i];
+                    blockType = Const.MAPDESIGN[indexX, i];
                 }
 
                 m_allFrameList[i][j].Init(blockType != BlockType.NONE, new Index(i, j));
@@ -165,18 +146,6 @@ public class IngameManager : MonoBehaviour
         }
     }
 
-    Vector3 CalcPositionByIndex(int indexX, int indexY)//pyk SPACE_X, Y 따로 상수값 두지말고 직접 계산하자(가운데정렬)
-    {
-        float addPosY = indexX % 2 == 0 ? m_imageHeight / 2 : 0;
-        Vector3 position = new Vector3(
-            indexX * m_imageWidth + Const.SPACE_X,
-            indexY * m_imageHeight + Const.SPACE_Y + addPosY,
-            0);
-
-        return position;
-    }
-
-    Frame m_frameStart = null;
     public void FramePointerDown(Frame frameStart)
     {
         if (m_isGameReady == false || m_isSwapping)
@@ -225,10 +194,10 @@ public class IngameManager : MonoBehaviour
         }
     }
 
-    int m_moveCompleteCount = 0;
     void SwapAndCheckMatching(Frame frame1, Frame frame2)
     {
         m_isSwapping = true;
+        Debug.Log("스왑 시작");
         m_moveCompleteCount = 0;
 
         bool isMatching = false;        
@@ -256,34 +225,47 @@ public class IngameManager : MonoBehaviour
             m_moveCompleteCount = 0;
 
             if (isMatching)
-            {
+            { 
                 RemoveMathcingList();
+                m_isSwapping = false;
+                Debug.Log("스왑 종료");
+
+                FillEmptyArea();
             }
             else
             {
-                JustSwap(frame1, frame2);
+                SwapBack(frame1, frame2);
             }
-
-            m_isSwapping = false;
         }
     }
 
-    void JustSwap(Frame frame1, Frame frame2)
+    void SwapBack(Frame frame1, Frame frame2)
     {
+        m_moveCompleteCount = 0;
+
         Block block1 = frame1.GetBlock();
         frame1.SetEmpty();
         Block block2 = frame2.GetBlock();
         frame2.SetEmpty();
         frame1.SetBlock(block2);
         frame2.SetBlock(block1);
-        frame1.GetBlock().StartMove(frame1.GetPosition());
-        frame2.GetBlock().StartMove(frame2.GetPosition());
+        frame1.GetBlock().StartMove(frame1.GetPosition(),
+            ()=> EndSwapBackAction());
+        frame2.GetBlock().StartMove(frame2.GetPosition(),
+            ()=> EndSwapBackAction());
     }
 
-    //bool m_isMatching = false;
-    List<Frame> m_matchingFrameList = new List<Frame>();
-    int m_matchingStraightCount = 0;
-    List<Frame> m_tempMatchingFrameList = new List<Frame>();     
+    void EndSwapBackAction()
+    {
+        m_moveCompleteCount++;
+        if (m_moveCompleteCount == 2)
+        {
+            m_moveCompleteCount = 0;
+
+            m_isSwapping = false;
+            Debug.Log("스왑 종료");
+        }
+    }
 
     bool CheckMatching(Frame frame)
     {
@@ -295,18 +277,18 @@ public class IngameManager : MonoBehaviour
 
         //1. Square
 
-        Index index_leftUp              = CalcIndex(index, Direction.LEFTUP);
-        Index index_leftUp_up           = CalcIndex(index_leftUp, Direction.UP);
-        Index index_up                  = CalcIndex(index, Direction.UP);
-        Index index_rightUp             = CalcIndex(index, Direction.RIGHTUP);
-        Index index_rightUp_up          = CalcIndex(index_rightUp, Direction.UP);
-        Index index_rightUp_rightDown   = CalcIndex(index_rightUp, Direction.RIGHTDOWN);
-        Index index_rightDown           = CalcIndex(index, Direction.RIGHTDOWN);
-        Index index_rightDown_down      = CalcIndex(index_rightDown, Direction.DOWN);
-        Index index_down                = CalcIndex(index, Direction.DOWN);
-        Index index_leftDown            = CalcIndex(index, Direction.LEFTDOWN);
-        Index index_leftDown_down       = CalcIndex(index_leftDown, Direction.DOWN);
-        Index index_leftDown_leftUp     = CalcIndex(index_leftDown, Direction.LEFTUP);
+        Index index_leftUp              = Util.CalcIndex(index, Direction.LEFTUP);
+        Index index_leftUp_up           = Util.CalcIndex(index_leftUp, Direction.UP);
+        Index index_up                  = Util.CalcIndex(index, Direction.UP);
+        Index index_rightUp             = Util.CalcIndex(index, Direction.RIGHTUP);
+        Index index_rightUp_up          = Util.CalcIndex(index_rightUp, Direction.UP);
+        Index index_rightUp_rightDown   = Util.CalcIndex(index_rightUp, Direction.RIGHTDOWN);
+        Index index_rightDown           = Util.CalcIndex(index, Direction.RIGHTDOWN);
+        Index index_rightDown_down      = Util.CalcIndex(index_rightDown, Direction.DOWN);
+        Index index_down                = Util.CalcIndex(index, Direction.DOWN);
+        Index index_leftDown            = Util.CalcIndex(index, Direction.LEFTDOWN);
+        Index index_leftDown_down       = Util.CalcIndex(index_leftDown, Direction.DOWN);
+        Index index_leftDown_leftUp     = Util.CalcIndex(index_leftDown, Direction.LEFTUP);
 
         //LeftUp, Up
         //+ LeftUp_Up
@@ -358,9 +340,7 @@ public class IngameManager : MonoBehaviour
 
         if (isMatching)
         {
-            AddMatchingList(new List<Frame> { frame });
-            //    m_matchingFrameList.Add(frame);
-            //    RemoveMathcingList();
+            AddMatchingList(new List<Frame> { frame });            
         }
 
         return isMatching;
@@ -388,8 +368,8 @@ public class IngameManager : MonoBehaviour
             return;
         }
 
-        Index newIndex = CalcIndex(index, direction);
-        if (IsOutOfIndex(newIndex, m_mapSizeX, m_mapSizeY))
+        Index newIndex = Util.CalcIndex(index, direction);
+        if (Util.IsOutOfIndex(newIndex, Const.MAPSIZE_X, Const.MAPSIZE_Y))
         {
             return;
         }
@@ -411,9 +391,9 @@ public class IngameManager : MonoBehaviour
             return false;
         }
 
-        if (IsOutOfIndex(index1, m_mapSizeX, m_mapSizeY) ||
-            IsOutOfIndex(index2, m_mapSizeX, m_mapSizeY) ||
-            IsOutOfIndex(index3, m_mapSizeX, m_mapSizeY))
+        if (Util.IsOutOfIndex(index1, Const.MAPSIZE_X, Const.MAPSIZE_Y) ||
+            Util.IsOutOfIndex(index2, Const.MAPSIZE_X, Const.MAPSIZE_Y) ||
+            Util.IsOutOfIndex(index3, Const.MAPSIZE_X, Const.MAPSIZE_Y))
         {
             return false;
         }
@@ -435,50 +415,6 @@ public class IngameManager : MonoBehaviour
         }
 
         return false;
-    }
-
-    Index CalcIndex(Index index, Direction direction)
-    {
-        switch (direction)
-        {
-            case Direction.UP:
-                {
-                    index.Y += 1;
-                    break;
-                }
-            case Direction.DOWN:
-                {
-                    index.Y -= 1;
-                    break;
-                }
-            case Direction.LEFTUP:
-                {
-                    index.Y += (index.X % 2 == 0 ? 1 : 0);
-                    index.X -= 1;
-                    break;
-                }
-            case Direction.LEFTDOWN:
-                {
-                    index.Y -= (index.X % 2 == 0 ? 0 : 1);
-                    index.X -= 1;
-                    break;
-                }
-            case Direction.RIGHTUP:
-                {
-                    index.Y += (index.X % 2 == 0 ? 1 : 0);
-                    index.X += 1;
-
-                    break;
-                }
-            case Direction.RIGHTDOWN:
-                {
-                    index.Y -= (index.X % 2 == 0 ? 0 : 1);
-                    index.X += 1;
-                    break;
-                }
-        }
-
-        return index;
     }
 
     void AddMatchingList(List<Frame> frameList)
@@ -504,14 +440,18 @@ public class IngameManager : MonoBehaviour
         m_matchingFrameList.Clear();
     }
 
-    bool IsOutOfIndex(Index index, int arraySizeX, int arraySizeY)
+    void FillEmptyArea()
     {
-        if(index.X < 0 || index.X >= arraySizeX ||
-            index.Y < 0 || index.Y >= arraySizeY)
+        for (int i = 0; i < m_allFrameList.Count; ++i)
         {
-            return true;
-        }
+            for (int j = 0; j < m_allFrameList[i].Count; ++j)
+            {
+                if (m_allFrameList[i][j])
+                {
+                    //빈 곳 채우기
 
-        return false;
+                }
+            }
+        }
     }
 }
