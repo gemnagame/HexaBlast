@@ -14,9 +14,11 @@ public class Block : MonoBehaviour
 
     public void Init(BlockType blockType)
     {
-        SetType(blockType);
+        SetBlockType(blockType);
 
         gameObject.SetActive(true);// m_use);//pyk test
+
+        m_bombCount = 0;
     }
 
     void Update()
@@ -55,13 +57,12 @@ public class Block : MonoBehaviour
         m_endMoveAction = endMoveAction;
     }
 
-    public BlockType GetType()
+    public BlockType GetBlockType()
     {
         return m_blockType;
-    }
-       
+    }       
 
-    void SetType(BlockType blockType)
+    void SetBlockType(BlockType blockType)
     {
         if (m_imageBlock == null)
         {
@@ -105,11 +106,37 @@ public class Block : MonoBehaviour
                 }
             case BlockType.TOP:
                 {
-                    color = Color.black;
+                    color = Color.black;                    
                     break;
                 }
         }
 
         m_imageBlock.color = color;        
+    }
+
+    public bool AddBombCount()//return : need to remove
+    {
+        if (m_blockType != BlockType.TOP)
+        {
+            return false;
+        }
+        
+        m_bombCount++;
+
+        switch (m_bombCount)
+        {
+            case 1:
+                {
+                    m_imageBlock.color = Color.gray;
+                    return false;
+                }
+            case 2:
+                {
+                    m_bombCount = 0;
+                    return true;
+                }
+        }
+
+        return false;
     }
 }

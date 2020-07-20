@@ -12,10 +12,12 @@ public class IngameManager : MonoBehaviour
     public Transform m_frameAreaTrans;
     public Transform m_blockAreaTrans;
 
-    //ready
-    bool m_isGameReady = false;
+    //object pool
     List<List<Frame>> m_allFrameList = new List<List<Frame>>();
     List<Block> m_allBlockList = new List<Block>();
+
+    //ready
+    bool m_isGameReady = false;
 
     //swap
     bool m_isSwapping = false;
@@ -23,13 +25,15 @@ public class IngameManager : MonoBehaviour
     int m_moveCompleteCount = 0;
 
     //matching
-    List<Frame> m_matchingFrameList = new List<Frame>();    
-    List<Frame> m_tempMatchingFrameList = new List<Frame>();
-    int m_matchingStraightCount = 0;//pyk 함수 내 static 변수로 둘까
-
+    int m_matchingStraightCount = 0;
+    List<Frame> m_tempMatchingList = new List<Frame>();    
+    List<Frame> m_matchingList = new List<Frame>();
+    List<Frame> m_addBompList = new List<Frame>();
+    List<Frame> m_needToRemoveList = new List<Frame>();
+    
     //drop
     bool m_isDropping = false;
-    Queue<Block> m_removedBlock = new Queue<Block>();
+    Queue<Block> m_removedBlockQueue = new Queue<Block>();
 
     void Awake()
     {
@@ -197,7 +201,7 @@ public class IngameManager : MonoBehaviour
     void SwapAndCheckMatching(Frame frame1, Frame frame2)
     {
         m_isSwapping = true;
-        Debug.Log("스왑 시작");
+        Debug.Log("============스왑 시작============");
         m_moveCompleteCount = 0;
 
         bool isMatching = false;        
@@ -225,10 +229,11 @@ public class IngameManager : MonoBehaviour
             m_moveCompleteCount = 0;
 
             if (isMatching)
-            { 
-                RemoveMathcingList();
+            {
+                MatchingSideEffect();
+                RemoveBlockList();
                 m_isSwapping = false;
-                Debug.Log("스왑 종료");
+                Debug.Log("============스왑 종료============");
 
                 DropBlock();
             }
@@ -263,7 +268,7 @@ public class IngameManager : MonoBehaviour
             m_moveCompleteCount = 0;
 
             m_isSwapping = false;
-            Debug.Log("스왑 종료");
+            Debug.Log("============스왑 종료============");
         }
     }
 
@@ -340,7 +345,7 @@ public class IngameManager : MonoBehaviour
 
         if (isMatching)
         {
-            AddMatchingList(new List<Frame> { frame });            
+            AddMatchingList(frame);            
         }
 
         return isMatching;
@@ -349,12 +354,12 @@ public class IngameManager : MonoBehaviour
     bool CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction1, Direction direction2)
     {
         m_matchingStraightCount = 0;
-        m_tempMatchingFrameList.Clear();
+        m_tempMatchingList.Clear();
         CheckMatchingStraight_Recursive(checkBlockType, index, direction1);
         CheckMatchingStraight_Recursive(checkBlockType, index, direction2);
         if (m_matchingStraightCount >= 2)
         {
-            AddMatchingList(m_tempMatchingFrameList);
+            AddMatchingList(m_tempMatchingList);
             return true;
         }
 
@@ -378,7 +383,7 @@ public class IngameManager : MonoBehaviour
         if (blockType == checkBlockType)
         {
             m_matchingStraightCount++;
-            m_tempMatchingFrameList.Add(m_allFrameList[calcIndex.X][calcIndex.Y]);
+            m_tempMatchingList.Add(m_allFrameList[calcIndex.X][calcIndex.Y]);
 
             CheckMatchingStraight_Recursive(checkBlockType, calcIndex, direction);
         }
@@ -405,11 +410,11 @@ public class IngameManager : MonoBehaviour
             blockType2 == checkBlockType &&
             blockType3 == checkBlockType)
         {
-            m_tempMatchingFrameList.Clear();
-            m_tempMatchingFrameList.Add(m_allFrameList[index1.X][index1.Y]);
-            m_tempMatchingFrameList.Add(m_allFrameList[index2.X][index2.Y]);
-            m_tempMatchingFrameList.Add(m_allFrameList[index3.X][index3.Y]);
-            AddMatchingList(m_tempMatchingFrameList);
+            m_tempMatchingList.Clear();
+            m_tempMatchingList.Add(m_allFrameList[index1.X][index1.Y]);
+            m_tempMatchingList.Add(m_allFrameList[index2.X][index2.Y]);
+            m_tempMatchingList.Add(m_allFrameList[index3.X][index3.Y]);
+            AddMatchingList(m_tempMatchingList);
 
             return true;
         }
@@ -421,41 +426,60 @@ public class IngameManager : MonoBehaviour
     {
         for(int i = 0; i < frameList.Count; ++i)
         {
-            //중복 방지
-            if(m_matchingFrameList.Contains(frameList[i]) == false)
-            {
-                m_matchingFrameList.Add(frameList[i]);
-            }
+            ////중복 방지
+            //if(m_matchingFrameList.Contains(frameList[i]) == false)
+            //{
+            //    m_matchingFrameList.Add(frameList[i]);
+            //}
+            AddMatchingList(frameList[i]);
         }
     }
 
-    void RemoveMathcingList()
+    void AddMatchingList(Frame frame)
     {
-        //        Index calcIndex = Const.ENTRANCE_INDEX;
-        Vector3 position = Util.CalcPositionByIndex(Const.ENTRANCE_UP_INDEX);
-
-        for (int i = 0; i < m_matchingFrameList.Count; ++i)
+        //중복 방지
+        if (m_matchingList.Contains(frame) == false)
         {
-            Block block = m_matchingFrameList[i].GetBlock();
-            m_removedBlock.Enqueue(block);
+            m_matchingList.Add(frame);
+        }
+    }
 
-            //calcIndex = Util.CalcIndex(calcIndex, Direction.UP);
-            //block.SetPosition(Util.CalcPositionByIndex(calcIndex));
+    void RemoveBlockList()
+    {
+        Vector3 position = Util.CalcPositionByIndex(Const.ENTRANCE_UP_INDEX);
+                
+        //pyk 함수로 따로 뺄까. 코드 중복임
+
+        for (int i = 0; i < m_matchingList.Count; ++i)
+        {
+            Block block = m_matchingList[i].GetBlock();
+            m_removedBlockQueue.Enqueue(block);
             block.SetPosition(position);
-
-            m_matchingFrameList[i].SetEmpty();
+            m_matchingList[i].SetEmpty();
         }
 
-        m_matchingFrameList.Clear();
+        m_matchingList.Clear();
+
+
+        for (int i = 0; i < m_needToRemoveList.Count; ++i)
+        {
+            Block block = m_needToRemoveList[i].GetBlock();
+            m_removedBlockQueue.Enqueue(block);
+            block.SetPosition(position);
+            m_needToRemoveList[i].SetEmpty();
+        }
+
+        m_needToRemoveList.Clear();
     }
 
     void DropBlock()
     {
         m_isDropping = true;
+        Debug.Log("============드롭 시작============");
 
         DropMapBlock();
 
-        AddNewBlock_Recursive();
+        DropNewBlock_Recursive();
 
     }
 
@@ -468,50 +492,51 @@ public class IngameManager : MonoBehaviour
             for (int i = 1; i < Const.MAPSIZE_X; i+=2)
             {
                 var frame = m_allFrameList[i][j];
-                Debug.Log(i + "," + j);
-                BlockDrop_Recursive(frame, true, false, false);
+                //Debug.Log(i + "," + j);
+                DropBlock_Recursive(frame, true, false, false);
             }
 
             for (int i = 0; i < Const.MAPSIZE_X; i += 2)
             {
                 var frame = m_allFrameList[i][j];
-                Debug.Log(i + "," + j);
-                BlockDrop_Recursive(frame, true, false, false);
+                //Debug.Log(i + "," + j);
+                DropBlock_Recursive(frame, true, false, false);
             }
         }
     }
 
-    void AddNewBlock_Recursive()
+    void DropNewBlock_Recursive()
     {
-        if(m_removedBlock.Count == 0)
+        if(m_removedBlockQueue.Count == 0)
         {
             m_isDropping = false;
+            Debug.Log("============드롭 종료============");
             return;
         }               
 
         Frame entranceFrame = GetFrameByIndex(Const.ENTRANCE_INDEX);
         if (entranceFrame.IsEmpty() == false)
         {
-            Debug.Log("입구 막힘;;");
+            Debug.Log("============입구 막힘============");
             //pyk 입구가 막혀있으면 뚫릴때까지 시도?...음
             //BlockDrop_Recursive(entranceFrame);
             //DropNewBlock_Recursive();
             return;
         }
 
-        Debug.Log("새 블럭 추가요");
+        Debug.Log("새 블럭 추가");
 
-        Block newblock = m_removedBlock.Dequeue();
+        Block newblock = m_removedBlockQueue.Dequeue();
         entranceFrame.SetBlock(newblock);
         entranceFrame.GetBlock().StartMove(entranceFrame.GetPosition(),
             () =>
             {
-                BlockDrop_Recursive(entranceFrame);
-                AddNewBlock_Recursive();
+                DropBlock_Recursive(entranceFrame);
+                DropNewBlock_Recursive();
             });
     }
 
-    void BlockDrop_Recursive(Frame frame, bool useDown = true, bool useLeftDown = true, bool useRightDown = true)
+    void DropBlock_Recursive(Frame frame, bool useDown = true, bool useLeftDown = true, bool useRightDown = true)
     {
         if (frame.IsMoveable() == false)
         {
@@ -526,7 +551,6 @@ public class IngameManager : MonoBehaviour
              */
 
         Index index = frame.GetIndex();
-        Frame frame_down = GetFrameByDir(index, Direction.DOWN);
 
         //맨위는 예외적으로 전방향
         Frame frame_up = GetFrameByDir(index, Direction.UP);
@@ -541,11 +565,12 @@ public class IngameManager : MonoBehaviour
         }
 
         if (useDown)
-        {   
+        {
+            Frame frame_down = GetFrameByDir(index, Direction.DOWN);
             if (frame_down && frame_down.IsEmpty())
             {
                 MoveBlockToFrame(frame, frame_down, 
-                    ()=> BlockDrop_Recursive(frame_down, useDown, useLeftDown, useRightDown));
+                    ()=> DropBlock_Recursive(frame_down, useDown, useLeftDown, useRightDown));
                 return;
             }
         }
@@ -559,7 +584,7 @@ public class IngameManager : MonoBehaviour
                 (frame_leftUp == null || frame_leftUp.IsMoveable() == false))
             {
                 MoveBlockToFrame(frame, frame_leftDown,
-                    () => BlockDrop_Recursive(frame_leftDown, useDown, useLeftDown, useRightDown));
+                    () => DropBlock_Recursive(frame_leftDown, useDown, useLeftDown, useRightDown));
                 return;
             }
         }
@@ -573,7 +598,7 @@ public class IngameManager : MonoBehaviour
                 (frame_rightUp == null || frame_rightUp.IsMoveable() == false))
             {
                 MoveBlockToFrame(frame, frame_rightDown,
-                    () => BlockDrop_Recursive(frame_rightDown, useDown, useLeftDown, useRightDown));
+                    () => DropBlock_Recursive(frame_rightDown, useDown, useLeftDown, useRightDown));
                 return;
             }
         }
@@ -608,5 +633,67 @@ public class IngameManager : MonoBehaviour
         toFrame.SetBlock(fromFrame.GetBlock());
         fromFrame.SetEmpty();
         toFrame.GetBlock().StartMove(toFrame.GetPosition(), endMovevAction);
+    }
+
+    void MatchingSideEffect()
+    {
+        m_addBompList.Clear();
+
+        for (int i = 0; i < m_matchingList.Count; ++i)
+        {
+            Index index = m_matchingList[i].GetIndex();
+
+            MatchingSideEffect(GetFrameByDir(index, Direction.LEFTUP));
+            MatchingSideEffect(GetFrameByDir(index, Direction.UP));
+            MatchingSideEffect(GetFrameByDir(index, Direction.RIGHTUP));
+            MatchingSideEffect(GetFrameByDir(index, Direction.RIGHTDOWN));
+            MatchingSideEffect(GetFrameByDir(index, Direction.DOWN));
+            MatchingSideEffect(GetFrameByDir(index, Direction.LEFTDOWN));
+        }
+    }
+
+    void MatchingSideEffect(Frame frame)
+    {
+        if (frame && frame.IsEmpty() == false &&
+            m_addBompList.Contains(frame) == false)
+        {
+            m_addBompList.Add(frame);
+
+            Block block = frame.GetBlock();
+            bool needToRemove = block.AddBombCount();
+            if(needToRemove)
+            {
+                if (m_needToRemoveList.Contains(frame) == false)
+                {
+                    m_needToRemoveList.Add(frame);
+                }
+            }
+        }
+    }
+
+    public void Restart()
+    {
+        m_isGameReady = false;
+
+        //swap
+        m_isSwapping = false;
+        m_frameStart = null;
+        m_moveCompleteCount = 0;
+
+        //matching
+        m_matchingStraightCount = 0;
+        m_tempMatchingList.Clear();
+        m_matchingList.Clear();
+        m_addBompList.Clear();
+        m_needToRemoveList.Clear();
+
+        //drop
+        m_isDropping = false;
+        m_removedBlockQueue.Clear();
+
+        SetMapDesign();
+
+
+
     }
 }
