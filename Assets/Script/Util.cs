@@ -57,6 +57,11 @@ static class Util
         return position;
     }
 
+    public static Vector3 CalcPositionByIndex(Index index)
+    {
+        return CalcPositionByIndex(index.X, index.Y);
+    }
+
     public static bool IsOutOfIndex(Index index, int arraySizeX, int arraySizeY)
     {
         if (index.X < 0 || index.X >= arraySizeX ||

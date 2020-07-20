@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class IngameManager : MonoBehaviour
@@ -28,6 +29,7 @@ public class IngameManager : MonoBehaviour
 
     //drop
     bool m_isDropping = false;
+    Queue<Block> m_removedBlock = new Queue<Block>();
 
     void Awake()
     {
@@ -228,7 +230,7 @@ public class IngameManager : MonoBehaviour
                 m_isSwapping = false;
                 Debug.Log("스왑 종료");
 
-                BlockDrop();
+                DropBlock();
             }
             else
             {
@@ -429,72 +431,154 @@ public class IngameManager : MonoBehaviour
 
     void RemoveMathcingList()
     {
-        for(int i = 0; i < m_matchingFrameList.Count; ++i)
+        //        Index calcIndex = Const.ENTRANCE_INDEX;
+        Vector3 position = Util.CalcPositionByIndex(Const.ENTRANCE_UP_INDEX);
+
+        for (int i = 0; i < m_matchingFrameList.Count; ++i)
         {
-            m_matchingFrameList[i].GetBlock().SetPosition(new Vector3(0, 500, 0));
+            Block block = m_matchingFrameList[i].GetBlock();
+            m_removedBlock.Enqueue(block);
+
+            //calcIndex = Util.CalcIndex(calcIndex, Direction.UP);
+            //block.SetPosition(Util.CalcPositionByIndex(calcIndex));
+            block.SetPosition(position);
+
             m_matchingFrameList[i].SetEmpty();
         }
 
         m_matchingFrameList.Clear();
     }
 
-    void BlockDrop()
+    void DropBlock()
     {
-        m_isDropping = true;//pyk 이건, BlockDrop_Recursive 모든 요소가 끝났을 때 + 입구에 밀어넣을 블럭 없을 때 false 해주기
+        m_isDropping = true;
 
-        //pyk 아래줄부터(나중에 i, j 순으로 해서 테스트도 해보기
+        DropMapBlock();
+
+        AddNewBlock_Recursive();
+
+    }
+
+    void DropMapBlock()
+    {
         for (int j = 0; j < Const.MAPSIZE_Y; ++j)
         {
-            for (int i = 0; i < Const.MAPSIZE_X; ++i)
+            //pyk 홀수 먼저할필요 없으면 코드되돌리자;;
+            //i가 홀수일때 먼저(홀수일때 위치가 더 낮음)
+            for (int i = 1; i < Const.MAPSIZE_X; i+=2)
             {
                 var frame = m_allFrameList[i][j];
-                BlockDrop_Recursive(frame);
+                Debug.Log(i + "," + j);
+                BlockDrop_Recursive(frame, true, false, false);
+            }
+
+            for (int i = 0; i < Const.MAPSIZE_X; i += 2)
+            {
+                var frame = m_allFrameList[i][j];
+                Debug.Log(i + "," + j);
+                BlockDrop_Recursive(frame, true, false, false);
             }
         }
     }
 
-    void BlockDrop_Recursive(Frame frame)
+    void AddNewBlock_Recursive()
     {
-        //방법1
-        if (frame.IsMoveable())
+        if(m_removedBlock.Count == 0)
         {
-            /*
+            m_isDropping = false;
+            return;
+        }               
+
+        Frame entranceFrame = GetFrameByIndex(Const.ENTRANCE_INDEX);
+        if (entranceFrame.IsEmpty() == false)
+        {
+            Debug.Log("입구 막힘;;");
+            //pyk 입구가 막혀있으면 뚫릴때까지 시도?...음
+            //BlockDrop_Recursive(entranceFrame);
+            //DropNewBlock_Recursive();
+            return;
+        }
+
+        Debug.Log("새 블럭 추가요");
+
+        Block newblock = m_removedBlock.Dequeue();
+        entranceFrame.SetBlock(newblock);
+        entranceFrame.GetBlock().StartMove(entranceFrame.GetPosition(),
+            () =>
+            {
+                BlockDrop_Recursive(entranceFrame);
+                AddNewBlock_Recursive();
+            });
+    }
+
+    void BlockDrop_Recursive(Frame frame, bool useDown = true, bool useLeftDown = true, bool useRightDown = true)
+    {
+        if (frame.IsMoveable() == false)
+        {
+            return;
+        }
+
+        /*
              * 아래쪽 프레임 인덱스부터 돌면서 아래 셋 중 하나 해당하면 해당 위치로 이동
             1.내 아래쪽 비었음
             2.왼쪽아래 비었음 + 왼쪽위 블럭이 이동불가
             3.오른쪽아래 비었음 + 오른쪽위 블럭이 이동불가
              */
 
-            Index index = frame.GetIndex();
-            Frame frame_down = GetFrameByDir(index, Direction.DOWN);
-            Frame frame_leftDown = GetFrameByDir(index, Direction.LEFTDOWN);
-            Frame frame_leftUp = GetFrameByDir(index, Direction.LEFTUP);
-            Frame frame_rightDown = GetFrameByDir(index, Direction.RIGHTDOWN);
-            Frame frame_rightUp = GetFrameByDir(index, Direction.RIGHTUP);
+        Index index = frame.GetIndex();
+        Frame frame_down = GetFrameByDir(index, Direction.DOWN);
 
+        //맨위는 예외적으로 전방향
+        Frame frame_up = GetFrameByDir(index, Direction.UP);
+        if(frame_up && frame_up.IsMoveable())           
+        {
+        }
+        else
+        {
+            Debug.Log("나 맨위 " + index.X + ", " + index.Y + ", " + frame.GetBlockType());
+            useLeftDown = true;
+            useRightDown = true;
+        }
+
+        if (useDown)
+        {   
             if (frame_down && frame_down.IsEmpty())
             {
                 MoveBlockToFrame(frame, frame_down, 
-                    ()=> BlockDrop_Recursive(frame_down));
+                    ()=> BlockDrop_Recursive(frame_down, useDown, useLeftDown, useRightDown));
+                return;
             }
-            else if (frame_leftDown && frame_leftDown.IsEmpty() &&
+        }
+
+        if(useLeftDown)
+        {
+            Frame frame_leftDown = GetFrameByDir(index, Direction.LEFTDOWN);
+            Frame frame_leftUp = GetFrameByDir(index, Direction.LEFTUP);
+
+            if (frame_leftDown && frame_leftDown.IsEmpty() &&
                 (frame_leftUp == null || frame_leftUp.IsMoveable() == false))
             {
                 MoveBlockToFrame(frame, frame_leftDown,
-                    ()=> BlockDrop_Recursive(frame_leftDown));
+                    () => BlockDrop_Recursive(frame_leftDown, useDown, useLeftDown, useRightDown));
+                return;
             }
-            else if (frame_rightDown && frame_rightDown.IsEmpty() &&
+        }
+
+        if(useRightDown)
+        {
+            Frame frame_rightDown = GetFrameByDir(index, Direction.RIGHTDOWN);
+            Frame frame_rightUp = GetFrameByDir(index, Direction.RIGHTUP);
+
+            if (frame_rightDown && frame_rightDown.IsEmpty() &&
                 (frame_rightUp == null || frame_rightUp.IsMoveable() == false))
             {
                 MoveBlockToFrame(frame, frame_rightDown,
-                    () => BlockDrop_Recursive(frame_rightDown));
-            }
-            else
-            {
-                
-                //재귀 끝!!!!!!!!!!!!!!!!!
+                    () => BlockDrop_Recursive(frame_rightDown, useDown, useLeftDown, useRightDown));
+                return;
             }
         }
+
+        Debug.Log("나 끝남 " + index.X + ", " + index.Y + ", " + frame.GetBlockType());
     }
 
     Frame GetFrameByDir(Index index, Direction dir)

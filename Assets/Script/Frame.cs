@@ -28,7 +28,7 @@ public class Frame : MonoBehaviour
     {
         if (m_block != null)
         {
-            Debug.LogError("SetBlock() : m_block != null");
+            Debug.LogError("SetBlock() : m_block != null, " + m_index.X + ", " + m_index.Y + ", " + m_block.GetType() + ", " + block.GetType());            
 
             return;
         }
@@ -48,7 +48,7 @@ public class Frame : MonoBehaviour
             return BlockType.NONE;
         }
 
-        return m_block.GetBlockType();
+        return m_block.GetType();
     }
 
     public void SetEmpty()
@@ -63,7 +63,7 @@ public class Frame : MonoBehaviour
 
     public bool IsMoveable()
     {
-        return m_block && m_block.GetBlockType() != BlockType.NONE;
+        return m_block && m_block.GetType() != BlockType.NONE;
     }
 
     public bool IsActive()
@@ -73,7 +73,7 @@ public class Frame : MonoBehaviour
 
     public Vector3 GetPosition()
     {
-        return transform.localPosition;
+        return transform.position;
     }
 
     public Index GetIndex()

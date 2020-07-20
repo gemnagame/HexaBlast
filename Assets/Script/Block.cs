@@ -10,6 +10,7 @@ public class Block : MonoBehaviour
     bool m_moving = false;
     Vector3 m_moveTargetPosition = Vector3.zero;
     Action m_endMoveAction = null;
+    int m_bombCount = 0;
 
     public void Init(BlockType blockType)
     {
@@ -22,9 +23,9 @@ public class Block : MonoBehaviour
     {
         if (m_moving)
         {
-            transform.localPosition = Vector3.MoveTowards(transform.localPosition, m_moveTargetPosition, Time.deltaTime * Const.BLOCK_MOVE_SPEED);
+            transform.position = Vector3.MoveTowards(transform.position, m_moveTargetPosition, Time.deltaTime * Const.BLOCK_MOVE_SPEED);
 
-            if(transform.localPosition == m_moveTargetPosition)
+            if(transform.position == m_moveTargetPosition)
             {
                 m_moving = false;
 
@@ -38,7 +39,7 @@ public class Block : MonoBehaviour
 
     public void SetPosition(Vector3 position)
     {
-        transform.localPosition = position;
+        transform.position = position;
     }
 
     public void StartMove(Vector3 moveTargetPosition, Action endMoveAction)// = null)
@@ -54,7 +55,7 @@ public class Block : MonoBehaviour
         m_endMoveAction = endMoveAction;
     }
 
-    public BlockType GetBlockType()
+    public BlockType GetType()
     {
         return m_blockType;
     }
