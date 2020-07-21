@@ -46,7 +46,7 @@ static class Util
         return index;
     }
 
-    public static Vector3 CalcPositionByIndex(int indexX, int indexY)//pyk SPACE_X, Y 따로 상수값 두지말고 직접 계산하자(가운데정렬)
+    public static Vector3 CalcPositionByIndex(int indexX, int indexY)
     {
         float addPosY = indexX % 2 == 0 ? Const.FRAME_IMAGE_HEIGHT / 2 : 0;
         Vector3 position = new Vector3(
@@ -71,5 +71,10 @@ static class Util
         }
 
         return false;
+    }
+
+    public static BlockType GetRandomBlockType()
+    {
+        return (BlockType)Random.Range((int)(BlockType.NONE) + 1, (int)(BlockType.TOP));
     }
 }

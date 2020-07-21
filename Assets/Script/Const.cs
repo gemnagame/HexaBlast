@@ -1,26 +1,20 @@
 ﻿
+using UnityEngine;
+
 static class Const
 {
+    public const int CLEAR_CONDITION = 6;
+    public const int MOVE_LIMIT_COUNT = 20;
+    public const string GAME_CLEAR_TEXT = "게임 클리어!!";
+    public const string GAME_OVER_TEXT = "게임 오버...";
+
+    public const float BLOCK_MOVE_TIME = 0.4f;
+
     public const float SPACE_X = -240f;
     public const float SPACE_Y = -300f;
     public const float FRAME_IMAGE_WIDTH = 80f;
     public const float FRAME_IMAGE_HEIGHT = 90f;
 
-    //public const float BLOCK_MOVE_SPEED = 10f;
-    public const float BLOCK_MOVE_TIME = 0.8f;
-
-    //게임
-    //public static BlockType[,] MAPDESIGN = new BlockType[,]
-    //    {
-    //        {BlockType.NONE, BlockType.NONE, BlockType.NONE, BlockType.PURPLE, BlockType.NONE, BlockType.NONE, BlockType.NONE},
-    //        {BlockType.NONE, BlockType.ORANGE, BlockType.GREEN, BlockType.RED, BlockType.YELLOW, BlockType.RED, BlockType.NONE},
-    //        {BlockType.YELLOW, BlockType.PURPLE, BlockType.TOP, BlockType.YELLOW, BlockType.ORANGE, BlockType.TOP, BlockType.GREEN},
-    //        {BlockType.GREEN, BlockType.PURPLE, BlockType.YELLOW, BlockType.BLUE, BlockType.RED, BlockType.PURPLE, BlockType.YELLOW},
-    //        {BlockType.BLUE, BlockType.TOP, BlockType.YELLOW, BlockType.PURPLE, BlockType.GREEN, BlockType.PURPLE, BlockType.GREEN},
-    //        {BlockType.NONE, BlockType.NONE, BlockType.TOP, BlockType.TOP, BlockType.TOP, BlockType.NONE, BlockType.NONE}
-    //    };
-
-    //유튜브
     public static BlockType[,] MAPDESIGN = new BlockType[,]
         {
             {BlockType.NONE, BlockType.NONE, BlockType.NONE, BlockType.BLUE, BlockType.NONE, BlockType.NONE, BlockType.NONE},
@@ -31,6 +25,11 @@ static class Const
             {BlockType.NONE, BlockType.NONE, BlockType.TOP, BlockType.TOP, BlockType.TOP, BlockType.NONE, BlockType.NONE}
         };
 
+    public static int MAPSIZE_X = MAPDESIGN.GetLength(1);//7
+    public static int MAPSIZE_Y = MAPDESIGN.GetLength(0);//6
+    public static Index ENTRANCE_INDEX = new Index(MAPSIZE_X / 2, MAPSIZE_Y - 1);
+    public static Index ENTRANCE_UP_INDEX = new Index(ENTRANCE_INDEX.X, ENTRANCE_INDEX.Y + 1);
+
     //테스트 데이터
     //public static BlockType[,] MAPDESIGN = new BlockType[,]
     //{
@@ -40,12 +39,7 @@ static class Const
     //        {BlockType.TOP, BlockType.GREEN, BlockType.PURPLE, BlockType.YELLOW, BlockType.YELLOW, BlockType.GREEN, BlockType.YELLOW},
     //        {BlockType.GREEN, BlockType.BLUE, BlockType.BLUE, BlockType.TOP, BlockType.BLUE, BlockType.GREEN, BlockType.GREEN},
     //        {BlockType.NONE, BlockType.NONE, BlockType.BLUE, BlockType.TOP, BlockType.PURPLE, BlockType.NONE, BlockType.NONE}
-    //};
-
-    public static int MAPSIZE_X = MAPDESIGN.GetLength(1);//7
-    public static int MAPSIZE_Y = MAPDESIGN.GetLength(0);//6
-    public static Index ENTRANCE_INDEX = new Index(MAPSIZE_X / 2, MAPSIZE_Y - 1);
-    public static Index ENTRANCE_UP_INDEX = new Index(ENTRANCE_INDEX.X, ENTRANCE_INDEX.Y + 1);
+    //};    
 }
 
 public enum BlockType
@@ -81,6 +75,13 @@ public struct Index
     public int X;
     public int Y;
 }
+
+public enum GameResult
+{
+    GAME_CLEAR = 0,
+    GAME_OVER
+}
+
 
 
 

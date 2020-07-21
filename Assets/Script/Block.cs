@@ -5,7 +5,6 @@ using UnityEngine.UI;
 public class Block : MonoBehaviour
 {
     public Image m_imageBlock;
-    public Text m_debugLabel;//pyk 제거
 
     BlockType m_blockType = BlockType.NONE;
     int m_bombCount = 0;
@@ -17,24 +16,20 @@ public class Block : MonoBehaviour
     Action m_endMoveAction = null;    
     float m_moveStartTime = 0f;
 
-    Index m_index;//pyk 제거
-
     public void Init(BlockType blockType)
     {
         SetBlockType(blockType);
 
         gameObject.SetActive(blockType != BlockType.NONE);
 
-        m_bombCount = 0;        
+        m_bombCount = 0;
+        m_imageBlock.color = Color.white;
     }
 
     void Update()
     {
         if (m_moving)
         {
-            //transform.localPosition = Vector3.MoveTowards(transform.localPosition, m_moveTargetPosition, Time.deltaTime * Const.BLOCK_MOVE_SPEED);
-
-            //m_movedTime += Time.deltaTime;
             float movedTime = Time.time - m_moveStartTime;
             transform.localPosition = Vector3.Lerp(m_moveStartPosition, m_moveTargetPosition, movedTime / Const.BLOCK_MOVE_TIME);
 
@@ -50,16 +45,6 @@ public class Block : MonoBehaviour
         }    
     }
 
-    public void SetIndex(Index index)//pyk 제거
-    {
-        m_index = index;
-
-        if (m_debugLabel)
-        {
-            m_debugLabel.text = index.X + "," + index.Y;
-        }
-    }
-
     public void SetPosition(Vector3 position)
     {
         transform.localPosition = position;
@@ -69,7 +54,6 @@ public class Block : MonoBehaviour
     {
         if(m_moving)
         {
-            Debug.LogError("StartMove() : m_moving");            
             return;
         }
 

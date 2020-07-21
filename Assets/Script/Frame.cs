@@ -4,8 +4,6 @@ using UnityEngine.UI;
 
 public class Frame : MonoBehaviour
 {
-    public Text m_debugLabel;//pyk 제거
-
     bool m_active = false;
     Index m_index;
     Block m_block = null;
@@ -17,24 +15,16 @@ public class Frame : MonoBehaviour
         m_block = null;
 
         gameObject.SetActive(active);
-
-        if (m_debugLabel)
-        {
-            m_debugLabel.text = index.X + "," + index.Y;
-        }
     }
 
     public void SetBlock(Block block)
     {
         if (m_block != null)
         {
-            Debug.LogError("SetBlock() : m_block != null, " + m_index.X + ", " + m_index.Y + ", " + m_block.GetBlockType() + ", " + block.GetBlockType());            
-
             return;
         }
 
         m_block = block;
-        block.SetIndex(m_index);
     }
 
     public void SetPosition(Vector3 position)

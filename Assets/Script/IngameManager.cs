@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class IngameManager : MonoBehaviour
 {
@@ -12,6 +12,11 @@ public class IngameManager : MonoBehaviour
     public GameObject m_blockOrigin;
     public Transform m_frameAreaTrans;
     public Transform m_blockAreaTrans;
+
+    //ui
+    public Text m_clearConditionText;
+    public Text m_moveLimitCountText;
+    public ResultPopup m_resultPopup;
 
     //object pool
     List<List<Frame>> m_allFrameList = new List<List<Frame>>();
@@ -23,18 +28,22 @@ public class IngameManager : MonoBehaviour
     //swap
     bool m_isSwapping = false;
     Frame m_frameStart = null;
-    int m_moveCompleteCount = 0;
+    int m_moveCompleteCheckCount = 0;
 
     //matching
     int m_matchingStraightCount = 0;
     List<Frame> m_tempMatchingList = new List<Frame>();    
     List<Frame> m_matchingList = new List<Frame>();
     List<Frame> m_addBompList = new List<Frame>();
-    List<Frame> m_needToRemoveList = new List<Frame>();
+    List<Frame> m_needToRemoveTopList = new List<Frame>();
     
     //drop
     bool m_isDropping = false;
     Queue<Block> m_removedBlockQueue = new Queue<Block>();
+
+    //clear
+    int m_removedTopCount = 0;
+    int m_moveCount = 0;
 
     void Awake()
     {
@@ -47,16 +56,41 @@ public class IngameManager : MonoBehaviour
             Destroy(gameObject);
         }
 
-        //Screen.SetResolution(720, 1280, true);
-
+        Init();
         CreateObjectOnce();
+        HideResultPopup();
+    }
+
+    void Init()
+    {
+        //ready
+        m_isGameReady = false;
+
+        //swap
+        m_isSwapping = false;
+        m_frameStart = null;
+        m_moveCompleteCheckCount = 0;
+
+        //matching
+        m_matchingStraightCount = 0;
+        m_tempMatchingList.Clear();
+        m_matchingList.Clear();
+        m_addBompList.Clear();
+        m_needToRemoveTopList.Clear();
+
+        //drop
+        m_isDropping = false;
+        m_removedBlockQueue.Clear();
+
+        //clear
+        m_removedTopCount = 0;
+        m_moveCount = 0;
     }
 
     void CreateObjectOnce()
     {
         if(m_allBlockList.Count > 0 || m_allFrameList.Count > 0)
         {
-            Debug.LogError("CreateObjectOnce : m_allBlockList.Count > 0 || m_allFrameList.Count > 0");
             return;
         }
 
@@ -65,12 +99,6 @@ public class IngameManager : MonoBehaviour
             return;
         }
 
-        //RectTransform rectTransform = m_frameOrigin.GetComponent<RectTransform>();
-        //if (rectTransform)
-        //{
-        //    rectTransform.sizeDelta = new Vector2(Const.FRAME_IMAGE_WIDTH, Const.FRAME_IMAGE_HEIGHT);
-        //}
-
         //1회만 생성, 이후 게임 재시작시 생성된 블럭들 재이용
         for (int i = 0; i < Const.MAPSIZE_X; ++i)
         {
@@ -78,9 +106,6 @@ public class IngameManager : MonoBehaviour
 
             for (int j = 0; j < Const.MAPSIZE_Y; ++j)
             {
-                //Vector3 position = Util.CalcPositionByIndex(i, j);
-
-                //GameObject obj = Instantiate(m_frameOrigin, position, Quaternion.identity, m_frameAreaTrans);
                 GameObject obj = Instantiate(m_frameOrigin, m_frameAreaTrans);
                 if (obj)
                 {
@@ -88,7 +113,6 @@ public class IngameManager : MonoBehaviour
                     m_allFrameList[i].Add(frame);
                 }
 
-                //obj = Instantiate(m_blockOrigin, position, Quaternion.identity, m_blockAreaTrans);
                 obj = Instantiate(m_blockOrigin, m_blockAreaTrans);
                 if (obj)
                 {
@@ -101,7 +125,7 @@ public class IngameManager : MonoBehaviour
 
     void Start()
     {
-        SetMapDesign();
+        GameStart();
     }
 
     void SetMapDesign()
@@ -129,11 +153,6 @@ public class IngameManager : MonoBehaviour
 
         m_isGameReady = true;
     }
-
-    //void Update()
-    //{
-
-    //}
 
     void OnDestroy()
     {
@@ -164,8 +183,6 @@ public class IngameManager : MonoBehaviour
             return;
         }
 
-        Debug.Log("FramePointerDown");
-
         m_frameStart = frameStart;
     }
 
@@ -175,8 +192,6 @@ public class IngameManager : MonoBehaviour
         {
             return;
         }
-
-        Debug.Log("FramePointerUp");
 
         m_frameStart = null;
     }
@@ -188,8 +203,6 @@ public class IngameManager : MonoBehaviour
         {
             return;
         }
-
-        Debug.Log("FramePointerEnter");
 
         if (m_frameStart.GetBlockType() == BlockType.NONE || 
             frameEnd.GetBlockType() == BlockType.NONE)
@@ -208,8 +221,7 @@ public class IngameManager : MonoBehaviour
     void SwapAndCheckMatching(Frame frame1, Frame frame2)
     {
         m_isSwapping = true;
-        Debug.Log("============스왑 시작============");
-        m_moveCompleteCount = 0;
+        m_moveCompleteCheckCount = 0;
 
         bool isMatching = false;        
 
@@ -230,17 +242,19 @@ public class IngameManager : MonoBehaviour
 
     void EndSwapAction(bool isMatching, Frame frame1, Frame frame2)
     {
-        m_moveCompleteCount++;
-        if (m_moveCompleteCount == 2)
+        m_moveCompleteCheckCount++;
+        if (m_moveCompleteCheckCount == 2)
         {
-            m_moveCompleteCount = 0;
+            m_moveCompleteCheckCount = 0;
 
             if (isMatching)
             {
                 AfterCheckMatching();
 
                 m_isSwapping = false;
-                Debug.Log("============스왑 종료============");
+
+                m_moveCount++;
+                SetMoveLimitCountText();
             }
             else
             {
@@ -251,7 +265,7 @@ public class IngameManager : MonoBehaviour
 
     void SwapBack(Frame frame1, Frame frame2)
     {
-        m_moveCompleteCount = 0;
+        m_moveCompleteCheckCount = 0;
 
         Block block1 = frame1.GetBlock();
         frame1.SetEmpty();
@@ -267,13 +281,12 @@ public class IngameManager : MonoBehaviour
 
     void EndSwapBackAction()
     {
-        m_moveCompleteCount++;
-        if (m_moveCompleteCount == 2)
+        m_moveCompleteCheckCount++;
+        if (m_moveCompleteCheckCount == 2)
         {
-            m_moveCompleteCount = 0;
+            m_moveCompleteCheckCount = 0;
 
             m_isSwapping = false;
-            Debug.Log("============스왑 종료============");
         }
     }
 
@@ -454,27 +467,28 @@ public class IngameManager : MonoBehaviour
             Block block = m_matchingList[i].GetBlock();
             m_removedBlockQueue.Enqueue(block);
             block.SetPosition(position);
+            block.Init(Util.GetRandomBlockType());
             m_matchingList[i].SetEmpty();
         }
 
         m_matchingList.Clear();
 
 
-        for (int i = 0; i < m_needToRemoveList.Count; ++i)
+        for (int i = 0; i < m_needToRemoveTopList.Count; ++i)
         {
-            Block block = m_needToRemoveList[i].GetBlock();
+            Block block = m_needToRemoveTopList[i].GetBlock();
             m_removedBlockQueue.Enqueue(block);
             block.SetPosition(position);
-            m_needToRemoveList[i].SetEmpty();
+            block.Init(Util.GetRandomBlockType());
+            m_needToRemoveTopList[i].SetEmpty();
         }
 
-        m_needToRemoveList.Clear();
+        m_needToRemoveTopList.Clear();
     }
 
     IEnumerator CO_DropAllBlock()
     {
         m_isDropping = true;
-        Debug.Log("============드롭 시작============");
 
         for (int j = 0; j < Const.MAPSIZE_Y; ++j)
         {
@@ -503,7 +517,6 @@ public class IngameManager : MonoBehaviour
         if (m_removedBlockQueue.Count == 0)
         {
             m_isDropping = false;
-            Debug.Log("============드롭 종료============");
 
             AllCheckMatching();
 
@@ -513,13 +526,10 @@ public class IngameManager : MonoBehaviour
         Frame entranceFrame = GetFrameByIndex(Const.ENTRANCE_INDEX);
         if (entranceFrame.IsEmpty() == false)
         {
-            Debug.Log("============입구 막힘============");
             yield break;
         }
 
         yield return new WaitForSeconds(0.1f);
-
-        Debug.Log("============새 블럭 추가============");
 
         Block newblock = m_removedBlockQueue.Dequeue();
         entranceFrame.SetBlock(newblock);
@@ -602,7 +612,7 @@ public class IngameManager : MonoBehaviour
         return m_allFrameList[index.X][index.Y];
     }
 
-    bool TouchBlocked()
+    public bool TouchBlocked()
     {
         return m_isGameReady == false || m_isSwapping || m_isDropping;
     }
@@ -642,38 +652,32 @@ public class IngameManager : MonoBehaviour
             bool needToRemove = block.AddBombCount();
             if(needToRemove)
             {
-                if (m_needToRemoveList.Contains(frame) == false)
+                if (m_needToRemoveTopList.Contains(frame) == false)
                 {
-                    m_needToRemoveList.Add(frame);
+                    m_needToRemoveTopList.Add(frame);
+                    m_removedTopCount++;
+                    SetRemovedTopCountText();
                 }
             }
         }
     }
 
-    public void Restart()
+    public void On_Restart()
     {
-        m_isGameReady = false;
+        if(TouchBlocked())
+        {
+            return;
+        }
 
-        //swap
-        m_isSwapping = false;
-        m_frameStart = null;
-        m_moveCompleteCount = 0;
+        GameStart();
+    }
 
-        //matching
-        m_matchingStraightCount = 0;
-        m_tempMatchingList.Clear();
-        m_matchingList.Clear();
-        m_addBompList.Clear();
-        m_needToRemoveList.Clear();
-
-        //drop
-        m_isDropping = false;
-        m_removedBlockQueue.Clear();
-
+    void GameStart()
+    {
+        Init();
         SetMapDesign();
-
-
-
+        SetRemovedTopCountText();
+        SetMoveLimitCountText();
     }
 
     void AfterCheckMatching()
@@ -699,5 +703,84 @@ public class IngameManager : MonoBehaviour
         {
             AfterCheckMatching();
         }
+    }
+
+    void SetRemovedTopCountText()
+    {
+        if(m_clearConditionText == null)
+        {
+            return;
+        }
+
+        int count = Const.CLEAR_CONDITION - m_removedTopCount;
+        count = count <= 0 ? 0 : count;
+
+        m_clearConditionText.text = count.ToString();
+
+        if (m_removedTopCount >= Const.CLEAR_CONDITION)
+        {
+            ShowResultPopup(GameResult.GAME_CLEAR);
+        }
+    }
+
+    void SetMoveLimitCountText()
+    {
+        if(m_moveLimitCountText == null)
+        {
+            return;
+        }
+
+        int count = Const.MOVE_LIMIT_COUNT - m_moveCount;
+        count = count <= 0 ? 0 : count;
+
+        m_moveLimitCountText.text = count.ToString();
+
+        if (m_moveCount >= Const.MOVE_LIMIT_COUNT)
+        {
+            ShowResultPopup(GameResult.GAME_OVER);
+        }
+    }
+
+    void HideResultPopup()
+    {
+        if (m_resultPopup == null)
+        {
+            return;
+        }
+
+        m_resultPopup.Hide();
+    }
+
+    void ShowResultPopup(GameResult gameResult)
+    {
+        if(m_resultPopup == null)
+        {
+            return;
+        }
+
+        if(gameResult == GameResult.GAME_CLEAR)
+        {
+            m_resultPopup.Show(Const.GAME_CLEAR_TEXT);
+        }
+        else if(gameResult == GameResult.GAME_OVER)
+        {
+            m_resultPopup.Show(Const.GAME_OVER_TEXT);
+        }
+    }
+
+    public void On_Shupple()
+    {
+        if(TouchBlocked())
+        {
+            return;
+        }
+
+        //for (int i = 0; i < Const.MAPSIZE_X; ++i)
+        //{
+        //    for (int j = 0; j < Const.MAPSIZE_Y; ++j)
+        //    {
+        //        Frame = m_allFrameList[i][j];
+        //    }
+        //}
     }
 }
