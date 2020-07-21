@@ -45,9 +45,11 @@ public class IngameManager : MonoBehaviour
         else if (Instance != this)
         {
             Destroy(gameObject);
-        }        
+        }
 
-        CreateObjectOnce();        
+        //Screen.SetResolution(720, 1280, true);
+
+        CreateObjectOnce();
     }
 
     void CreateObjectOnce()
@@ -76,9 +78,10 @@ public class IngameManager : MonoBehaviour
 
             for (int j = 0; j < Const.MAPSIZE_Y; ++j)
             {
-                Vector3 position = Util.CalcPositionByIndex(i, j);
+                //Vector3 position = Util.CalcPositionByIndex(i, j);
 
-                GameObject obj = Instantiate(m_frameOrigin, position, Quaternion.identity, m_frameAreaTrans);
+                //GameObject obj = Instantiate(m_frameOrigin, position, Quaternion.identity, m_frameAreaTrans);
+                GameObject obj = Instantiate(m_frameOrigin, m_frameAreaTrans);
                 if (obj)
                 {
                     Frame frame = obj.GetComponent<Frame>();
@@ -108,14 +111,17 @@ public class IngameManager : MonoBehaviour
         {
             for (int j = 0; j < Const.MAPSIZE_Y; ++j)
             {
+                Vector3 position = Util.CalcPositionByIndex(i, j);
+
                 int indexX = Const.MAPSIZE_Y - 1 - j;
                 BlockType blockType = Const.MAPDESIGN[indexX, i];                
 
                 m_allFrameList[i][j].Init(blockType != BlockType.NONE, new Index(i, j));
+                m_allFrameList[i][j].SetPosition(position);
                 m_allFrameList[i][j].SetBlock(m_allBlockList[cou]);
 
                 m_allBlockList[cou].Init(blockType);
-                m_allBlockList[cou].SetPosition(m_allFrameList[i][j].GetPosition());
+                m_allBlockList[cou].SetPosition(position);
 
                 cou++;
             }
@@ -231,12 +237,10 @@ public class IngameManager : MonoBehaviour
 
             if (isMatching)
             {
-                MatchingSideEffect();
-                RemoveBlockList();
+                AfterCheckMatching();
+
                 m_isSwapping = false;
                 Debug.Log("============스왑 종료============");
-
-                StartCoroutine(CO_DropAllBlock());
             }
             else
             {
@@ -500,6 +504,9 @@ public class IngameManager : MonoBehaviour
         {
             m_isDropping = false;
             Debug.Log("============드롭 종료============");
+
+            AllCheckMatching();
+
             yield break;
         }
 
@@ -667,5 +674,30 @@ public class IngameManager : MonoBehaviour
 
 
 
+    }
+
+    void AfterCheckMatching()
+    {
+        MatchingSideEffect();
+        RemoveBlockList();
+        StartCoroutine(CO_DropAllBlock());
+    }
+
+    void AllCheckMatching()
+    {
+        bool isMatching = false;
+
+        for (int i = 0; i < Const.MAPSIZE_X; ++i)
+        {
+            for (int j = 0; j < Const.MAPSIZE_Y; ++j)
+            {
+                isMatching |= CheckMatching(m_allFrameList[i][j]);
+            }
+        }
+
+        if(isMatching)
+        {
+            AfterCheckMatching();
+        }
     }
 }

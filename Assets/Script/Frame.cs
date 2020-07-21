@@ -37,6 +37,11 @@ public class Frame : MonoBehaviour
         block.SetIndex(m_index);
     }
 
+    public void SetPosition(Vector3 position)
+    {
+        transform.localPosition = position;
+    }
+
     public Block GetBlock()
     {
         return m_block;
@@ -74,7 +79,7 @@ public class Frame : MonoBehaviour
 
     public Vector3 GetPosition()
     {
-        return transform.position;
+        return transform.localPosition;
     }
 
     public Index GetIndex()

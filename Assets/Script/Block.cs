@@ -32,13 +32,13 @@ public class Block : MonoBehaviour
     {
         if (m_moving)
         {
-            //transform.position = Vector3.MoveTowards(transform.position, m_moveTargetPosition, Time.deltaTime * Const.BLOCK_MOVE_SPEED);
+            //transform.localPosition = Vector3.MoveTowards(transform.localPosition, m_moveTargetPosition, Time.deltaTime * Const.BLOCK_MOVE_SPEED);
 
             //m_movedTime += Time.deltaTime;
             float movedTime = Time.time - m_moveStartTime;
-            transform.position = Vector3.Lerp(m_moveStartPosition, m_moveTargetPosition, movedTime / Const.BLOCK_MOVE_TIME);
+            transform.localPosition = Vector3.Lerp(m_moveStartPosition, m_moveTargetPosition, movedTime / Const.BLOCK_MOVE_TIME);
 
-            if (transform.position == m_moveTargetPosition)
+            if (transform.localPosition == m_moveTargetPosition)
             {
                 m_moving = false;
 
@@ -62,7 +62,7 @@ public class Block : MonoBehaviour
 
     public void SetPosition(Vector3 position)
     {
-        transform.position = position;
+        transform.localPosition = position;
     }
 
     public void StartMove(Vector3 moveTargetPosition, Action endMoveAction)
@@ -75,7 +75,7 @@ public class Block : MonoBehaviour
 
         m_moveStartTime = Time.time;
         m_moving = true;
-        m_moveStartPosition = transform.position;
+        m_moveStartPosition = transform.localPosition;
         m_moveTargetPosition = moveTargetPosition;
         m_endMoveAction = endMoveAction;
     }

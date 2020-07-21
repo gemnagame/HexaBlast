@@ -1,8 +1,8 @@
 ﻿
 static class Const
 {
-    public const float SPACE_X = 120f;
-    public const float SPACE_Y = 300f;
+    public const float SPACE_X = -240f;
+    public const float SPACE_Y = -300f;
     public const float FRAME_IMAGE_WIDTH = 80f;
     public const float FRAME_IMAGE_HEIGHT = 90f;
 
