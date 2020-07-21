@@ -27,15 +27,15 @@ public class Frame : MonoBehaviour
         m_block = block;
     }
 
-    public void SetPosition(Vector3 position)
-    {
-        transform.localPosition = position;
-    }
-
     public Block GetBlock()
     {
         return m_block;
     }
+
+    public void SetPosition(Vector3 position)
+    {
+        transform.localPosition = position;
+    }    
 
     public BlockType GetBlockType()
     {

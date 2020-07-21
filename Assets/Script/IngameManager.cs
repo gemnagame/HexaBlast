@@ -34,8 +34,8 @@ public class IngameManager : MonoBehaviour
     int m_matchingStraightCount = 0;
     List<Frame> m_tempMatchingList = new List<Frame>();    
     List<Frame> m_matchingList = new List<Frame>();
-    List<Frame> m_addBompList = new List<Frame>();
-    List<Frame> m_needToRemoveTopList = new List<Frame>();
+    List<Frame> m_matchingNeighborList = new List<Frame>();//매칭 블럭 주변 목록
+    List<Frame> m_needToRemoveTopList = new List<Frame>();//제거될 팽이 목록 (매칭 블럭 주변 목록에서 제거될 팽이 찾은 것)
     
     //drop
     bool m_isDropping = false;
@@ -75,7 +75,7 @@ public class IngameManager : MonoBehaviour
         m_matchingStraightCount = 0;
         m_tempMatchingList.Clear();
         m_matchingList.Clear();
-        m_addBompList.Clear();
+        m_matchingNeighborList.Clear();
         m_needToRemoveTopList.Clear();
 
         //drop
@@ -128,9 +128,17 @@ public class IngameManager : MonoBehaviour
         GameStart();
     }
 
+    void GameStart()
+    {
+        Init();
+        SetMapDesign();
+        SetRemovedTopCountText();
+        SetMoveLimitCountText();
+    }
+
     void SetMapDesign()
     {
-        int cou = 0;
+        int count = 0;
         for (int i = 0; i < Const.MAPSIZE_X; ++i)
         {
             for (int j = 0; j < Const.MAPSIZE_Y; ++j)
@@ -142,12 +150,12 @@ public class IngameManager : MonoBehaviour
 
                 m_allFrameList[i][j].Init(blockType != BlockType.NONE, new Index(i, j));
                 m_allFrameList[i][j].SetPosition(position);
-                m_allFrameList[i][j].SetBlock(m_allBlockList[cou]);
+                m_allFrameList[i][j].SetBlock(m_allBlockList[count]);
 
-                m_allBlockList[cou].Init(blockType);
-                m_allBlockList[cou].SetPosition(position);
+                m_allBlockList[count].Init(blockType);
+                m_allBlockList[count].SetPosition(position);
 
-                cou++;
+                count++;
             }
         }
 
@@ -212,6 +220,7 @@ public class IngameManager : MonoBehaviour
 
         if (m_frameStart != frameEnd)
         {
+            //스왑
             SwapAndCheckMatching(m_frameStart, frameEnd);
 
             m_frameStart = null;
@@ -247,16 +256,17 @@ public class IngameManager : MonoBehaviour
         {
             m_moveCompleteCheckCount = 0;
 
+            //매칭이 있으면
             if (isMatching)
             {
                 AfterCheckMatching();
 
-                m_isSwapping = false;
-
                 m_moveCount++;
                 SetMoveLimitCountText();
+
+                m_isSwapping = false;
             }
-            else
+            else//매칭이 없으면 제자리로
             {
                 SwapBack(frame1, frame2);
             }
@@ -292,7 +302,6 @@ public class IngameManager : MonoBehaviour
 
     bool CheckMatching(Frame frame)
     {
-        //m_matchingFrameList.Clear();
         bool isMatching = false;
 
         BlockType checkBlockType = frame.GetBlockType();
@@ -363,7 +372,8 @@ public class IngameManager : MonoBehaviour
 
         if (isMatching)
         {
-            AddMatchingList(frame);            
+            //기준이 되는 프레임도 추가
+            AddMatchingList(frame);  
         }
 
         return isMatching;
@@ -514,6 +524,7 @@ public class IngameManager : MonoBehaviour
 
     IEnumerator CO_DropNewBlock()
     {
+        //새로 추가할 블럭 없으면 드롭 종료
         if (m_removedBlockQueue.Count == 0)
         {
             m_isDropping = false;
@@ -531,6 +542,7 @@ public class IngameManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.1f);
 
+        //새 블럭 추가(매칭에 의해 제거된 블럭의 타입을 바꿔서 재사용)
         Block newblock = m_removedBlockQueue.Dequeue();
         entranceFrame.SetBlock(newblock);
         entranceFrame.GetBlock().StartMove(entranceFrame.GetPosition(),
@@ -573,19 +585,20 @@ public class IngameManager : MonoBehaviour
             useRightDown = true;
         }
 
+        //아래로 이동
         if (useDown &&
             frame_down && frame_down.IsEmpty())
         {
             MoveBlockToFrame(frame, frame_down,
                 () => DropBlock(frame_down, useDown, useLeftDown, useRightDown));
-        }
+        }//좌하단으로 이동
         else if (useLeftDown &&
             frame_leftDown && frame_leftDown.IsEmpty() &&
             (frame_leftUp == null || frame_leftUp.IsMoveable() == false))
         {
             MoveBlockToFrame(frame, frame_leftDown,
                 () => DropBlock(frame_leftDown, useDown, useLeftDown, useRightDown));
-        }
+        }//우하단으로 이동
         else if (useRightDown &&
             frame_rightDown && frame_rightDown.IsEmpty() &&
             (frame_rightUp == null || frame_rightUp.IsMoveable() == false))
@@ -593,7 +606,6 @@ public class IngameManager : MonoBehaviour
             MoveBlockToFrame(frame, frame_rightDown,
                 () => DropBlock(frame_rightDown, useDown, useLeftDown, useRightDown));
         }
-
     }
 
     Frame GetFrameByDir(Index index, Direction dir)
@@ -614,6 +626,7 @@ public class IngameManager : MonoBehaviour
 
     public bool TouchBlocked()
     {
+        //유저 입력 막기
         return m_isGameReady == false || m_isSwapping || m_isDropping;
     }
 
@@ -626,7 +639,7 @@ public class IngameManager : MonoBehaviour
 
     void MatchingSideEffect()
     {
-        m_addBompList.Clear();
+        m_matchingNeighborList.Clear();
 
         for (int i = 0; i < m_matchingList.Count; ++i)
         {
@@ -644,17 +657,18 @@ public class IngameManager : MonoBehaviour
     void MatchingSideEffect(Frame frame)
     {
         if (frame && frame.IsEmpty() == false &&
-            m_addBompList.Contains(frame) == false)
+            m_matchingNeighborList.Contains(frame) == false)
         {
-            m_addBompList.Add(frame);
+            m_matchingNeighborList.Add(frame);
 
             Block block = frame.GetBlock();
-            bool needToRemove = block.AddBombCount();
+            bool needToRemove = block.AddMatchingNeighborCount();
             if(needToRemove)
             {
                 if (m_needToRemoveTopList.Contains(frame) == false)
                 {
                     m_needToRemoveTopList.Add(frame);
+
                     m_removedTopCount++;
                     SetRemovedTopCountText();
                 }
@@ -670,20 +684,17 @@ public class IngameManager : MonoBehaviour
         }
 
         GameStart();
-    }
-
-    void GameStart()
-    {
-        Init();
-        SetMapDesign();
-        SetRemovedTopCountText();
-        SetMoveLimitCountText();
-    }
+    }    
 
     void AfterCheckMatching()
     {
+        //매칭 효과
         MatchingSideEffect();
+
+        //제거
         RemoveBlockList();
+        
+        //드롭
         StartCoroutine(CO_DropAllBlock());
     }
 
@@ -766,21 +777,5 @@ public class IngameManager : MonoBehaviour
         {
             m_resultPopup.Show(Const.GAME_OVER_TEXT);
         }
-    }
-
-    public void On_Shupple()
-    {
-        if(TouchBlocked())
-        {
-            return;
-        }
-
-        //for (int i = 0; i < Const.MAPSIZE_X; ++i)
-        //{
-        //    for (int j = 0; j < Const.MAPSIZE_Y; ++j)
-        //    {
-        //        Frame = m_allFrameList[i][j];
-        //    }
-        //}
     }
 }

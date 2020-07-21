@@ -3,7 +3,7 @@ using UnityEngine;
 
 static class Const
 {
-    public const int CLEAR_CONDITION = 6;
+    public const int CLEAR_CONDITION = 10;
     public const int MOVE_LIMIT_COUNT = 20;
     public const string GAME_CLEAR_TEXT = "게임 클리어!!";
     public const string GAME_OVER_TEXT = "게임 오버...";
@@ -51,7 +51,7 @@ public enum BlockType
     GREEN,
     BLUE,
     PURPLE,
-    TOP
+    TOP//팽이
 }
 
 public enum Direction

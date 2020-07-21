@@ -7,13 +7,13 @@ public class Block : MonoBehaviour
     public Image m_imageBlock;
 
     BlockType m_blockType = BlockType.NONE;
-    int m_bombCount = 0;
+    int m_matchingNeighborCount = 0;
 
     //move
     bool m_moving = false;
     Vector3 m_moveStartPosition = Vector3.zero;
     Vector3 m_moveTargetPosition = Vector3.zero;
-    Action m_endMoveAction = null;    
+    Action m_endMoveAction = null;
     float m_moveStartTime = 0f;
 
     public void Init(BlockType blockType)
@@ -21,9 +21,18 @@ public class Block : MonoBehaviour
         SetBlockType(blockType);
 
         gameObject.SetActive(blockType != BlockType.NONE);
+        m_matchingNeighborCount = 0;
 
-        m_bombCount = 0;
-        m_imageBlock.color = Color.white;
+        m_moving = false;
+        m_moveStartPosition = Vector3.zero;
+        m_moveTargetPosition = Vector3.zero;
+        m_endMoveAction = null;
+        m_moveStartTime = 0f;
+
+        if(m_imageBlock)
+        {
+            m_imageBlock.color = Color.white;
+        }
     }
 
     void Update()
@@ -71,38 +80,41 @@ public class Block : MonoBehaviour
 
     void SetBlockType(BlockType blockType)
     {
-        if (m_imageBlock == null)
-        {
-            return;
-        }
-
         m_blockType = blockType;
-        Sprite sprite = SpriteManager.Instance.GetBlcokSprite(m_blockType);
-        if(sprite)
+
+        if (m_imageBlock)
         {
-            m_imageBlock.sprite = sprite;
-        }        
+            Sprite sprite = SpriteManager.Instance.GetBlcokSprite(m_blockType);
+            if (sprite)
+            {
+                m_imageBlock.sprite = sprite;
+            }
+        }             
     }
 
-    public bool AddBombCount()//return : need to remove
+    public bool AddMatchingNeighborCount()//return : need to remove
     {
         if (m_blockType != BlockType.TOP)
         {
             return false;
         }
         
-        m_bombCount++;
+        m_matchingNeighborCount++;
 
-        switch (m_bombCount)
+        switch (m_matchingNeighborCount)
         {
             case 1:
                 {
-                    m_imageBlock.color = Color.gray;//pyk
+                    if(m_imageBlock)
+                    {
+                        m_imageBlock.color = Color.gray;//pyk
+                    }
+
                     return false;
                 }
             case 2:
                 {
-                    m_bombCount = 0;
+                    m_matchingNeighborCount = 0;
                     return true;
                 }
         }
