@@ -16,7 +16,7 @@ public class Frame : MonoBehaviour
         m_index = index;
         m_block = null;
 
-        gameObject.SetActive(true);// active);//pyk test
+        gameObject.SetActive(active);
 
         if (m_debugLabel)
         {

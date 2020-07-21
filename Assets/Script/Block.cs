@@ -15,7 +15,7 @@ public class Block : MonoBehaviour
     Vector3 m_moveStartPosition = Vector3.zero;
     Vector3 m_moveTargetPosition = Vector3.zero;
     Action m_endMoveAction = null;    
-    float m_moveStartTime;
+    float m_moveStartTime = 0f;
 
     Index m_index;//pyk 제거
 
@@ -23,7 +23,7 @@ public class Block : MonoBehaviour
     {
         SetBlockType(blockType);
 
-        gameObject.SetActive(true);// m_use);//pyk test
+        gameObject.SetActive(blockType != BlockType.NONE);
 
         m_bombCount = 0;        
     }
@@ -93,48 +93,11 @@ public class Block : MonoBehaviour
         }
 
         m_blockType = blockType;
-        Color color = Color.white;
-
-        switch (blockType)
+        Sprite sprite = SpriteManager.Instance.GetBlcokSprite(m_blockType);
+        if(sprite)
         {
-            case BlockType.RED:
-                {
-                    color = Color.red;
-                    break;
-                }
-            case BlockType.ORANGE:
-                {
-                    color = new Color(1, 128f/255f, 0, 1);
-                    break;
-                }
-            case BlockType.YELLOW:
-                {
-                    color = Color.yellow;
-                    break;
-                }
-            case BlockType.GREEN:
-                {
-                    color = Color.green;
-                    break;
-                }
-            case BlockType.BLUE:
-                {
-                    color = Color.blue;
-                    break;
-                }
-            case BlockType.PURPLE:
-                {
-                    color = Color.magenta;
-                    break;
-                }
-            case BlockType.TOP:
-                {
-                    color = Color.black;                    
-                    break;
-                }
-        }
-
-        m_imageBlock.color = color;        
+            m_imageBlock.sprite = sprite;
+        }        
     }
 
     public bool AddBombCount()//return : need to remove
@@ -150,7 +113,7 @@ public class Block : MonoBehaviour
         {
             case 1:
                 {
-                    m_imageBlock.color = Color.gray;
+                    m_imageBlock.color = Color.gray;//pyk
                     return false;
                 }
             case 2:

@@ -63,11 +63,11 @@ public class IngameManager : MonoBehaviour
             return;
         }
 
-        RectTransform rectTransform = m_frameOrigin.GetComponent<RectTransform>();
-        if (rectTransform)
-        {
-            rectTransform.sizeDelta = new Vector2(Const.FRAME_IMAGE_WIDTH, Const.FRAME_IMAGE_HEIGHT);
-        }
+        //RectTransform rectTransform = m_frameOrigin.GetComponent<RectTransform>();
+        //if (rectTransform)
+        //{
+        //    rectTransform.sizeDelta = new Vector2(Const.FRAME_IMAGE_WIDTH, Const.FRAME_IMAGE_HEIGHT);
+        //}
 
         //1회만 생성, 이후 게임 재시작시 생성된 블럭들 재이용
         for (int i = 0; i < Const.MAPSIZE_X; ++i)
