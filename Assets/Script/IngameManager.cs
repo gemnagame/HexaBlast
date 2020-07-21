@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -235,7 +236,7 @@ public class IngameManager : MonoBehaviour
                 m_isSwapping = false;
                 Debug.Log("============스왑 종료============");
 
-                DropBlock();
+                StartCoroutine(CO_DropAllBlock());
             }
             else
             {
@@ -355,8 +356,8 @@ public class IngameManager : MonoBehaviour
     {
         m_matchingStraightCount = 0;
         m_tempMatchingList.Clear();
-        CheckMatchingStraight_Recursive(checkBlockType, index, direction1);
-        CheckMatchingStraight_Recursive(checkBlockType, index, direction2);
+        CheckMatchingStraight(checkBlockType, index, direction1);
+        CheckMatchingStraight(checkBlockType, index, direction2);
         if (m_matchingStraightCount >= 2)
         {
             AddMatchingList(m_tempMatchingList);
@@ -366,7 +367,7 @@ public class IngameManager : MonoBehaviour
         return false;
     }
 
-    void CheckMatchingStraight_Recursive(BlockType checkBlockType, Index index, Direction direction)//재귀
+    void CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction)//재귀
     {
         if (checkBlockType == BlockType.NONE || checkBlockType == BlockType.TOP)
         {
@@ -385,7 +386,7 @@ public class IngameManager : MonoBehaviour
             m_matchingStraightCount++;
             m_tempMatchingList.Add(m_allFrameList[calcIndex.X][calcIndex.Y]);
 
-            CheckMatchingStraight_Recursive(checkBlockType, calcIndex, direction);
+            CheckMatchingStraight(checkBlockType, calcIndex, direction);
         }
     }
 
@@ -426,18 +427,12 @@ public class IngameManager : MonoBehaviour
     {
         for(int i = 0; i < frameList.Count; ++i)
         {
-            ////중복 방지
-            //if(m_matchingFrameList.Contains(frameList[i]) == false)
-            //{
-            //    m_matchingFrameList.Add(frameList[i]);
-            //}
             AddMatchingList(frameList[i]);
         }
     }
 
     void AddMatchingList(Frame frame)
     {
-        //중복 방지
         if (m_matchingList.Contains(frame) == false)
         {
             m_matchingList.Add(frame);
@@ -472,71 +467,64 @@ public class IngameManager : MonoBehaviour
         m_needToRemoveList.Clear();
     }
 
-    void DropBlock()
+    IEnumerator CO_DropAllBlock()
     {
         m_isDropping = true;
         Debug.Log("============드롭 시작============");
 
-        DropMapBlock();
-
-        DropNewBlock_Recursive();
-
-    }
-
-    void DropMapBlock()
-    {
         for (int j = 0; j < Const.MAPSIZE_Y; ++j)
         {
-            //pyk 홀수 먼저할필요 없으면 코드되돌리자;;
             //i가 홀수일때 먼저(홀수일때 위치가 더 낮음)
-            for (int i = 1; i < Const.MAPSIZE_X; i+=2)
+            for (int i = 1; i < Const.MAPSIZE_X; i += 2)
             {
                 var frame = m_allFrameList[i][j];
-                //Debug.Log(i + "," + j);
-                DropBlock_Recursive(frame, true, false, false);
+                DropBlock(frame, true, false, false);
             }
 
             for (int i = 0; i < Const.MAPSIZE_X; i += 2)
             {
                 var frame = m_allFrameList[i][j];
-                //Debug.Log(i + "," + j);
-                DropBlock_Recursive(frame, true, false, false);
+                DropBlock(frame, true, false, false);
             }
+
+            yield return new WaitForSeconds(0.1f);
         }
+
+        StartCoroutine(CO_DropNewBlock());
+
     }
 
-    void DropNewBlock_Recursive()
+    IEnumerator CO_DropNewBlock()
     {
-        if(m_removedBlockQueue.Count == 0)
+        if (m_removedBlockQueue.Count == 0)
         {
             m_isDropping = false;
             Debug.Log("============드롭 종료============");
-            return;
-        }               
+            yield break;
+        }
 
         Frame entranceFrame = GetFrameByIndex(Const.ENTRANCE_INDEX);
         if (entranceFrame.IsEmpty() == false)
         {
             Debug.Log("============입구 막힘============");
-            //pyk 입구가 막혀있으면 뚫릴때까지 시도?...음
-            //BlockDrop_Recursive(entranceFrame);
-            //DropNewBlock_Recursive();
-            return;
+            yield break;
         }
 
-        Debug.Log("새 블럭 추가");
+        yield return new WaitForSeconds(0.1f);
+
+        Debug.Log("============새 블럭 추가============");
 
         Block newblock = m_removedBlockQueue.Dequeue();
         entranceFrame.SetBlock(newblock);
         entranceFrame.GetBlock().StartMove(entranceFrame.GetPosition(),
             () =>
             {
-                DropBlock_Recursive(entranceFrame);
-                DropNewBlock_Recursive();
-            });
+                DropBlock(entranceFrame);
+                StartCoroutine(CO_DropNewBlock());
+            });       
     }
 
-    void DropBlock_Recursive(Frame frame, bool useDown = true, bool useLeftDown = true, bool useRightDown = true)
+    void DropBlock(Frame frame, bool useDown = true, bool useLeftDown = true, bool useRightDown = true)
     {
         if (frame.IsMoveable() == false)
         {
@@ -552,58 +540,43 @@ public class IngameManager : MonoBehaviour
 
         Index index = frame.GetIndex();
 
-        //맨위는 예외적으로 전방향
         Frame frame_up = GetFrameByDir(index, Direction.UP);
-        if(frame_up && frame_up.IsMoveable())           
+        Frame frame_down = GetFrameByDir(index, Direction.DOWN);
+        Frame frame_leftDown = GetFrameByDir(index, Direction.LEFTDOWN);
+        Frame frame_leftUp = GetFrameByDir(index, Direction.LEFTUP);
+        Frame frame_rightDown = GetFrameByDir(index, Direction.RIGHTDOWN);
+        Frame frame_rightUp = GetFrameByDir(index, Direction.RIGHTUP);
+
+
+        //맨위는 예외적으로 전방향
+        bool isTop = !(frame_up && frame_up.IsMoveable());
+        if (isTop)
         {
-        }
-        else
-        {
-            Debug.Log("나 맨위 " + index.X + ", " + index.Y + ", " + frame.GetBlockType());
             useLeftDown = true;
             useRightDown = true;
         }
 
-        if (useDown)
+        if (useDown &&
+            frame_down && frame_down.IsEmpty())
         {
-            Frame frame_down = GetFrameByDir(index, Direction.DOWN);
-            if (frame_down && frame_down.IsEmpty())
-            {
-                MoveBlockToFrame(frame, frame_down, 
-                    ()=> DropBlock_Recursive(frame_down, useDown, useLeftDown, useRightDown));
-                return;
-            }
+            MoveBlockToFrame(frame, frame_down,
+                () => DropBlock(frame_down, useDown, useLeftDown, useRightDown));
+        }
+        else if (useLeftDown &&
+            frame_leftDown && frame_leftDown.IsEmpty() &&
+            (frame_leftUp == null || frame_leftUp.IsMoveable() == false))
+        {
+            MoveBlockToFrame(frame, frame_leftDown,
+                () => DropBlock(frame_leftDown, useDown, useLeftDown, useRightDown));
+        }
+        else if (useRightDown &&
+            frame_rightDown && frame_rightDown.IsEmpty() &&
+            (frame_rightUp == null || frame_rightUp.IsMoveable() == false))
+        {
+            MoveBlockToFrame(frame, frame_rightDown,
+                () => DropBlock(frame_rightDown, useDown, useLeftDown, useRightDown));
         }
 
-        if(useLeftDown)
-        {
-            Frame frame_leftDown = GetFrameByDir(index, Direction.LEFTDOWN);
-            Frame frame_leftUp = GetFrameByDir(index, Direction.LEFTUP);
-
-            if (frame_leftDown && frame_leftDown.IsEmpty() &&
-                (frame_leftUp == null || frame_leftUp.IsMoveable() == false))
-            {
-                MoveBlockToFrame(frame, frame_leftDown,
-                    () => DropBlock_Recursive(frame_leftDown, useDown, useLeftDown, useRightDown));
-                return;
-            }
-        }
-
-        if(useRightDown)
-        {
-            Frame frame_rightDown = GetFrameByDir(index, Direction.RIGHTDOWN);
-            Frame frame_rightUp = GetFrameByDir(index, Direction.RIGHTUP);
-
-            if (frame_rightDown && frame_rightDown.IsEmpty() &&
-                (frame_rightUp == null || frame_rightUp.IsMoveable() == false))
-            {
-                MoveBlockToFrame(frame, frame_rightDown,
-                    () => DropBlock_Recursive(frame_rightDown, useDown, useLeftDown, useRightDown));
-                return;
-            }
-        }
-
-        Debug.Log("나 끝남 " + index.X + ", " + index.Y + ", " + frame.GetBlockType());
     }
 
     Frame GetFrameByDir(Index index, Direction dir)
@@ -616,7 +589,6 @@ public class IngameManager : MonoBehaviour
     {
         if (Util.IsOutOfIndex(index, Const.MAPSIZE_X, Const.MAPSIZE_Y))
         {
-            //Debug.LogError("GetFrameByIndex : IsOutOfIndex");
             return null;
         }
 
@@ -631,7 +603,7 @@ public class IngameManager : MonoBehaviour
     void MoveBlockToFrame(Frame fromFrame, Frame toFrame, Action endMovevAction)
     {
         toFrame.SetBlock(fromFrame.GetBlock());
-        fromFrame.SetEmpty();
+        fromFrame.SetEmpty();       
         toFrame.GetBlock().StartMove(toFrame.GetPosition(), endMovevAction);
     }
 

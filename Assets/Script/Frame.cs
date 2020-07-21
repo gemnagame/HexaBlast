@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class Frame : MonoBehaviour
 {
-    public Text m_debugLabel;//pyk 추후 제거
+    public Text m_debugLabel;//pyk 제거
 
     bool m_active = false;
     Index m_index;
@@ -34,6 +34,7 @@ public class Frame : MonoBehaviour
         }
 
         m_block = block;
+        block.SetIndex(m_index);
     }
 
     public Block GetBlock()
