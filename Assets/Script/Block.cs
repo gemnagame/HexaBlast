@@ -28,11 +28,6 @@ public class Block : MonoBehaviour
         m_moveTargetPosition = Vector3.zero;
         m_endMoveAction = null;
         m_moveStartTime = 0f;
-
-        if(m_imageBlock)
-        {
-            m_imageBlock.color = Color.white;
-        }
     }
 
     void Update()
@@ -88,6 +83,7 @@ public class Block : MonoBehaviour
             if (sprite)
             {
                 m_imageBlock.sprite = sprite;
+                m_imageBlock.color = Color.white;
             }
         }             
     }
@@ -107,7 +103,7 @@ public class Block : MonoBehaviour
                 {
                     if(m_imageBlock)
                     {
-                        m_imageBlock.color = Color.gray;//pyk
+                        m_imageBlock.color = Color.gray;
                     }
 
                     return false;

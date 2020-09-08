@@ -7,43 +7,43 @@ using UnityEngine.UI;
 public class IngameManager : MonoBehaviour
 {
     public static IngameManager Instance = null;
-
-    public GameObject m_frameOrigin;
-    public GameObject m_blockOrigin;
-    public Transform m_frameAreaTrans;
-    public Transform m_blockAreaTrans;
-
-    //ui
-    public Text m_clearConditionText;
-    public Text m_moveLimitCountText;
-    public ResultPopup m_resultPopup;
+    
+    //UI
+    public Text m_clearConditionText;   //게임 클리어 조건 텍스트(예:팽이 12개 제거)
+    public Text m_moveLimitCountText;   //이동 횟수 제한 텍스트
+    public ResultPopup m_resultPopup;   //게임 결과 팝업(게임 클리어/게임 오버)
 
     //object pool
-    List<List<Frame>> m_allFrameList = new List<List<Frame>>();
-    List<Block> m_allBlockList = new List<Block>();
+    public GameObject m_frameOrigin;    //프레임 생성할 때 기준이 되는 GameObject (프레임 : 블럭 뒤의 육각틀)
+    public GameObject m_blockOrigin;    //블럭 생성할 때 기준이 되는 GameObject
+    public Transform m_frameAreaTrans;  //프레임 생성할 위치
+    public Transform m_blockAreaTrans;  //블럭 생성할 위치
+
+    List<List<Frame>> m_allFrameList = new List<List<Frame>>(); //생성한 프레임 목록
+    List<Block> m_allBlockList = new List<Block>();             //생성한 블럭 목록
 
     //ready
-    bool m_isGameReady = false;
+    bool m_isGameReady = false;//게임이 준비된 상태인지 여부
 
     //swap
-    bool m_isSwapping = false;
+    bool m_isSwapping = false;//두 블럭이 스왑 중인지 여부
     Frame m_frameStart = null;
     int m_moveCompleteCheckCount = 0;
 
     //matching
-    int m_matchingStraightCount = 0;
+    int m_matchingStraightCount = 0;                        //3매치 게임이라 2(기준 블럭 포함+1)이상부터 매칭 처리
     List<Frame> m_tempMatchingList = new List<Frame>();    
-    List<Frame> m_matchingList = new List<Frame>();
-    List<Frame> m_matchingNeighborList = new List<Frame>();//매칭 블럭 주변 목록
-    List<Frame> m_needToRemoveTopList = new List<Frame>();//제거될 팽이 목록 (매칭 블럭 주변 목록에서 제거될 팽이 찾은 것)
+    List<Frame> m_matchingList = new List<Frame>();         //매칭 블럭 목록
+    List<Frame> m_matchingNeighborList = new List<Frame>(); //매칭 블럭 주변 목록
+    List<Frame> m_needToRemoveTopList = new List<Frame>();  //제거될 팽이 목록 (매칭 블럭 주변 목록에서 제거될 팽이 찾은 것)
     
     //drop
-    bool m_isDropping = false;
-    Queue<Block> m_removedBlockQueue = new Queue<Block>();
+    bool m_isDropping = false;                              //블럭들이 드롭 중인지 여부
+    Queue<Block> m_removedBlockQueue = new Queue<Block>();  //제거 목록(매칭 블럭, 제거될 팽이 목록) 담는 큐(담았다가 드롭시켜 재사용)
 
-    //clear
-    int m_removedTopCount = 0;
-    int m_moveCount = 0;
+    //clear, over
+    int m_removedTopCount = 0;  //제거된 팽이 수
+    int m_moveCount = 0;        //이동 횟수
 
     void Awake()
     {
@@ -82,14 +82,16 @@ public class IngameManager : MonoBehaviour
         m_isDropping = false;
         m_removedBlockQueue.Clear();
 
-        //clear
+        //clear, over
         m_removedTopCount = 0;
         m_moveCount = 0;
     }
 
     void CreateObjectOnce()
     {
-        if(m_allBlockList.Count > 0 || m_allFrameList.Count > 0)
+        //1회만 생성, 이후 게임 재시작시 생성된 목록 재사용
+
+        if (m_allBlockList.Count > 0 || m_allFrameList.Count > 0)
         {
             return;
         }
@@ -99,7 +101,6 @@ public class IngameManager : MonoBehaviour
             return;
         }
 
-        //1회만 생성, 이후 게임 재시작시 생성된 블럭들 재이용
         for (int i = 0; i < Const.MAPSIZE_X; ++i)
         {
             m_allFrameList.Add(new List<Frame>());
@@ -138,6 +139,9 @@ public class IngameManager : MonoBehaviour
 
     void SetMapDesign()
     {
+        //기존에 디자인해둔 맵에 맞춰 프레임, 블럭 설정(위치, 타입)
+        //todo 현재는 테스트 단계라 소스코드(Const.MAPDESIGN[])에 들어가 있는데 파일로 따로 빼야함
+
         int count = 0;
         for (int i = 0; i < Const.MAPSIZE_X; ++i)
         {
@@ -164,6 +168,8 @@ public class IngameManager : MonoBehaviour
 
     void OnDestroy()
     {
+        //생성한 프레임 목록, 블럭 목록 제거
+
         for (int i = 0; i < m_allFrameList.Count; ++i)
         {        
             for (int j = 0; j < m_allFrameList[i].Count; ++j)
@@ -229,6 +235,8 @@ public class IngameManager : MonoBehaviour
 
     void SwapAndCheckMatching(Frame frame1, Frame frame2)
     {
+        //스왑 후 매칭이 있는지 체크하고 EndSwapAction 호출
+
         m_isSwapping = true;
         m_moveCompleteCheckCount = 0;
 
@@ -381,6 +389,8 @@ public class IngameManager : MonoBehaviour
 
     bool CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction1, Direction direction2)
     {
+        //직선 매칭 체크
+
         m_matchingStraightCount = 0;
         m_tempMatchingList.Clear();
         CheckMatchingStraight(checkBlockType, index, direction1);
@@ -394,8 +404,10 @@ public class IngameManager : MonoBehaviour
         return false;
     }
 
-    void CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction)//재귀
+    void CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction)
     {
+        //입력받은 방향따라 재귀로 반복 체크
+
         if (checkBlockType == BlockType.NONE || checkBlockType == BlockType.TOP)
         {
             return;
@@ -468,9 +480,10 @@ public class IngameManager : MonoBehaviour
 
     void RemoveBlockList()
     {
-        Vector3 position = Util.CalcPositionByIndex(Const.ENTRANCE_UP_INDEX);
-                
-        //pyk 함수로 따로 뺄까. 코드 중복임
+        //매칭 블럭, 제거될 팽이 목록 제거
+        //todo 함수로 따로 빼야할듯? 코드 중복임
+
+        Vector3 position = Util.CalcPositionByIndex(Const.ENTRANCE_UP_INDEX);                
 
         for (int i = 0; i < m_matchingList.Count; ++i)
         {
@@ -542,7 +555,7 @@ public class IngameManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.1f);
 
-        //새 블럭 추가(매칭에 의해 제거된 블럭의 타입을 바꿔서 재사용)
+        //새 블럭 추가(제거된 블럭의 타입을 바꿔서 재사용)
         Block newblock = m_removedBlockQueue.Dequeue();
         entranceFrame.SetBlock(newblock);
         entranceFrame.GetBlock().StartMove(entranceFrame.GetPosition(),
@@ -610,7 +623,8 @@ public class IngameManager : MonoBehaviour
 
     Frame GetFrameByDir(Index index, Direction dir)
     {
-        Index calcIndex = Util.CalcIndex(index, dir);//pyk 기존에 calcindex로 하던거 GetFrameByDir 함수로 변경 가능하면 변경하자
+        //todo 기존에 calcindex로 하던거 GetFrameByDir 함수로 변경 가능하면 변경하자
+        Index calcIndex = Util.CalcIndex(index, dir);
         return GetFrameByIndex(calcIndex);
     }
 
@@ -639,6 +653,8 @@ public class IngameManager : MonoBehaviour
 
     void MatchingSideEffect()
     {
+        //매칭 블럭 주변에 매칭 효과를 준다(팽이는 두번 받으면 제거됨)
+
         m_matchingNeighborList.Clear();
 
         for (int i = 0; i < m_matchingList.Count; ++i)
