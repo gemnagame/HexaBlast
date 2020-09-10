@@ -1,9 +1,13 @@
 ﻿using UnityEngine;
 
-public class UIManager : MonoBehaviour
+public class GameManager : MonoBehaviour
 {
-    public static UIManager Instance = null;
+    public static GameManager Instance = null;
 
+    [SerializeField]
+    Ingame m_ingame = null;
+    [SerializeField]
+    LobbyUI m_lobbyUI = null;
     [SerializeField]
     IngameUI m_ingameUI = null;      //인게임 UI
     [SerializeField]
@@ -12,8 +16,27 @@ public class UIManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+    }
 
-        HideResultPopup();
+    private void Start()
+    {
+        m_lobbyUI?.Show();
+        m_resultPopup?.Hide();
+    }
+
+    public void GameStart()
+    {
+        m_ingame?.GameStart();
+    }
+
+    public void GameRestart()
+    {
+        m_ingame?.GameRestart();
+    }
+
+    public void GameQuit()
+    {
+        Application.Quit();
     }
 
     public void SetRemovedTopCountText(int count)
@@ -24,11 +47,6 @@ public class UIManager : MonoBehaviour
     public void SetMoveLimitCountText(int count)
     {
         m_ingameUI?.SetMoveLimitCountText(count);
-    }
-
-    public void HideResultPopup()
-    {
-        m_resultPopup?.Hide();
     }
 
     public void ShowResultPopup(GameResult gameResult)

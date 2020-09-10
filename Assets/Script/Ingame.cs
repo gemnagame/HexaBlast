@@ -3,10 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class IngameManager : MonoBehaviour
+public class Ingame : MonoBehaviour
 {
-    public static IngameManager Instance = null;
-
     //object pool
     [SerializeField]
     GameObject m_frameOrigin = null;    //프레임 생성할 때 기준이 되는 GameObject (프레임 : 블럭 뒤의 육각틀)
@@ -44,9 +42,7 @@ public class IngameManager : MonoBehaviour
     int m_moveCount = 0;        //이동 횟수
 
     void Awake()
-    {
-        Instance = this;
-       
+    {       
         Init();
         CreateObjectOnce();
     }
@@ -114,17 +110,17 @@ public class IngameManager : MonoBehaviour
         }
     }
 
-    void Start()
-    {
-        GameStart();
-    }
-
-    void GameStart()
+    public void GameStart()
     {
         Init();
         SetMapDesign();
         SetRemovedTopCountText();
         SetMoveLimitCountText();
+    }
+
+    public void GameRestart()
+    {
+        GameStart();
     }
 
     void SetMapDesign()
@@ -180,7 +176,7 @@ public class IngameManager : MonoBehaviour
         }
     }
 
-    public void FramePointerDown(Frame frameStart)
+    public void PointerDown_Frame(Frame frameStart)
     {
         if (TouchBlocked())
         {
@@ -190,7 +186,7 @@ public class IngameManager : MonoBehaviour
         m_frameStart = frameStart;
     }
 
-    public void FramePointerUp()
+    public void PointerUp_Frame()
     {
         if (TouchBlocked())
         {
@@ -200,7 +196,7 @@ public class IngameManager : MonoBehaviour
         m_frameStart = null;
     }
 
-    public void FramePointerEnter(Frame frameEnd)
+    public void PointerEnter_Frame(Frame frameEnd)
     {
         if (TouchBlocked() || 
             m_frameStart == null || frameEnd == null)
@@ -541,7 +537,7 @@ public class IngameManager : MonoBehaviour
         return m_allFrameList[index.X][index.Y];
     }
 
-    public bool TouchBlocked()
+    bool TouchBlocked()
     {
         //유저 입력 막기
         return m_isGameReady == false || m_isSwapping || m_isDropping;
@@ -595,16 +591,6 @@ public class IngameManager : MonoBehaviour
         }
     }
 
-    public void Restart()
-    {
-        if(TouchBlocked())
-        {
-            return;
-        }
-
-        GameStart();
-    }    
-
     void AfterCheckMatching()
     {
         //매칭 효과
@@ -640,11 +626,11 @@ public class IngameManager : MonoBehaviour
         int count = Const.CLEAR_CONDITION - m_removedTopCount;
         count = count <= 0 ? 0 : count;
 
-        UIManager.Instance?.SetRemovedTopCountText(count);
+        GameManager.Instance?.SetRemovedTopCountText(count);
 
         if (m_removedTopCount >= Const.CLEAR_CONDITION)
         {
-            UIManager.Instance?.ShowResultPopup(GameResult.GAME_CLEAR);
+            GameManager.Instance?.ShowResultPopup(GameResult.GAME_CLEAR);
         }
     }
 
@@ -653,11 +639,11 @@ public class IngameManager : MonoBehaviour
         int count = Const.MOVE_LIMIT_COUNT - m_moveCount;
         count = count <= 0 ? 0 : count;
 
-        UIManager.Instance?.SetMoveLimitCountText(count);
+        GameManager.Instance?.SetMoveLimitCountText(count);
 
         if (m_moveCount >= Const.MOVE_LIMIT_COUNT)
         {
-            UIManager.Instance?.ShowResultPopup(GameResult.GAME_OVER);
+            GameManager.Instance?.ShowResultPopup(GameResult.GAME_OVER);
         }
     }
 }

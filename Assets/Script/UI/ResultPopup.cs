@@ -23,13 +23,10 @@ public class ResultPopup : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void On_Restart()
+    public void OnClick_Restart()
     {
-        if(IngameManager.Instance?.TouchBlocked() == false)
-        {
-            IngameManager.Instance?.Restart();
+        GameManager.Instance?.GameRestart();
 
-            Hide();
-        }
+        Hide();
     }
 }
