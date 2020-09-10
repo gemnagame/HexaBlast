@@ -1,16 +1,12 @@
-﻿using System.Diagnostics.Tracing;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 
 public class Frame : MonoBehaviour
 {
-    bool m_active = false;
     Index m_index;
     Block m_block = null;
 
     public void Init(bool active, Index index)
     {
-        m_active = active;
         m_index = index;
         m_block = null;
 
@@ -62,11 +58,6 @@ public class Frame : MonoBehaviour
         return m_block && m_block.GetBlockType() != BlockType.NONE;
     }
 
-    public bool IsActive()
-    {
-        return m_active;
-    }
-
     public Vector3 GetPosition()
     {
         return transform.localPosition;
@@ -79,16 +70,16 @@ public class Frame : MonoBehaviour
 
     public void On_PointerDown()
     {
-        IngameManager.Instance.FramePointerDown(this);
+        IngameManager.Instance?.FramePointerDown(this);
     }
 
     public void On_PointerUp()//다른 오브젝트 엔터 전에 마우스 떼면 끝나도록(버그 방지)
     {
-        IngameManager.Instance.FramePointerUp();
+        IngameManager.Instance?.FramePointerUp();
     }
 
     public void On_PointerEnter()
     {
-        IngameManager.Instance.FramePointerEnter(this);
+        IngameManager.Instance?.FramePointerEnter(this);
     }
 }

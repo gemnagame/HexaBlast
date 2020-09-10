@@ -4,7 +4,8 @@ using UnityEngine.UI;
 
 public class Block : MonoBehaviour
 {
-    public Image m_imageBlock;
+    [SerializeField]
+    Image m_imageBlock = null;
 
     BlockType m_blockType = BlockType.NONE;
     int m_matchingNeighborCount = 0;
@@ -79,7 +80,7 @@ public class Block : MonoBehaviour
 
         if (m_imageBlock)
         {
-            Sprite sprite = SpriteManager.Instance.GetBlcokSprite(m_blockType);
+            Sprite sprite = SpriteManager.Instance?.GetBlcokSprite(m_blockType);
             if (sprite)
             {
                 m_imageBlock.sprite = sprite;

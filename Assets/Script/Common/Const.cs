@@ -1,6 +1,4 @@
 ﻿
-using UnityEngine;
-
 static class Const
 {
     public const int CLEAR_CONDITION = 10;

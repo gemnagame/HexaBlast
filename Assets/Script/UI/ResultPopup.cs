@@ -1,11 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class ResultPopup : MonoBehaviour
 {
-    public Text m_resultText;
+    [SerializeField]
+    Text m_resultText = null;
 
     public void Show(string result)
     {
@@ -26,9 +25,9 @@ public class ResultPopup : MonoBehaviour
 
     public void On_Restart()
     {
-        if(IngameManager.Instance.TouchBlocked() == false)
+        if(IngameManager.Instance?.TouchBlocked() == false)
         {
-            IngameManager.Instance.On_Restart();
+            IngameManager.Instance?.Restart();
 
             Hide();
         }

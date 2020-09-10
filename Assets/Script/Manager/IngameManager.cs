@@ -2,22 +2,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class IngameManager : MonoBehaviour
 {
     public static IngameManager Instance = null;
-    
-    //UI
-    public Text m_clearConditionText;   //게임 클리어 조건 텍스트(예:팽이 12개 제거)
-    public Text m_moveLimitCountText;   //이동 횟수 제한 텍스트
-    public ResultPopup m_resultPopup;   //게임 결과 팝업(게임 클리어/게임 오버)
 
     //object pool
-    public GameObject m_frameOrigin;    //프레임 생성할 때 기준이 되는 GameObject (프레임 : 블럭 뒤의 육각틀)
-    public GameObject m_blockOrigin;    //블럭 생성할 때 기준이 되는 GameObject
-    public Transform m_frameAreaTrans;  //프레임 생성할 위치
-    public Transform m_blockAreaTrans;  //블럭 생성할 위치
+    [SerializeField]
+    GameObject m_frameOrigin = null;    //프레임 생성할 때 기준이 되는 GameObject (프레임 : 블럭 뒤의 육각틀)
+    [SerializeField]
+    GameObject m_blockOrigin = null;    //블럭 생성할 때 기준이 되는 GameObject
+    [SerializeField]
+    Transform m_frameAreaTrans = null;  //프레임 생성할 위치
+    [SerializeField]
+    Transform m_blockAreaTrans = null;  //블럭 생성할 위치
 
     List<List<Frame>> m_allFrameList = new List<List<Frame>>(); //생성한 프레임 목록
     List<Block> m_allBlockList = new List<Block>();             //생성한 블럭 목록
@@ -47,18 +45,10 @@ public class IngameManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else if (Instance != this)
-        {
-            Destroy(gameObject);
-        }
-
+        Instance = this;
+       
         Init();
         CreateObjectOnce();
-        HideResultPopup();
     }
 
     void Init()
@@ -605,7 +595,7 @@ public class IngameManager : MonoBehaviour
         }
     }
 
-    public void On_Restart()
+    public void Restart()
     {
         if(TouchBlocked())
         {
@@ -647,64 +637,27 @@ public class IngameManager : MonoBehaviour
 
     void SetRemovedTopCountText()
     {
-        if(m_clearConditionText == null)
-        {
-            return;
-        }
-
         int count = Const.CLEAR_CONDITION - m_removedTopCount;
         count = count <= 0 ? 0 : count;
 
-        m_clearConditionText.text = count.ToString();
+        UIManager.Instance?.SetRemovedTopCountText(count);
 
         if (m_removedTopCount >= Const.CLEAR_CONDITION)
         {
-            ShowResultPopup(GameResult.GAME_CLEAR);
+            UIManager.Instance?.ShowResultPopup(GameResult.GAME_CLEAR);
         }
     }
 
     void SetMoveLimitCountText()
     {
-        if(m_moveLimitCountText == null)
-        {
-            return;
-        }
-
         int count = Const.MOVE_LIMIT_COUNT - m_moveCount;
         count = count <= 0 ? 0 : count;
 
-        m_moveLimitCountText.text = count.ToString();
+        UIManager.Instance?.SetMoveLimitCountText(count);
 
         if (m_moveCount >= Const.MOVE_LIMIT_COUNT)
         {
-            ShowResultPopup(GameResult.GAME_OVER);
-        }
-    }
-
-    void HideResultPopup()
-    {
-        if (m_resultPopup == null)
-        {
-            return;
-        }
-
-        m_resultPopup.Hide();
-    }
-
-    void ShowResultPopup(GameResult gameResult)
-    {
-        if(m_resultPopup == null)
-        {
-            return;
-        }
-
-        if(gameResult == GameResult.GAME_CLEAR)
-        {
-            m_resultPopup.Show(Const.GAME_CLEAR_TEXT);
-        }
-        else if(gameResult == GameResult.GAME_OVER)
-        {
-            m_resultPopup.Show(Const.GAME_OVER_TEXT);
+            UIManager.Instance?.ShowResultPopup(GameResult.GAME_OVER);
         }
     }
 }

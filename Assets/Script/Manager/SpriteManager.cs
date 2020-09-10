@@ -5,25 +5,25 @@ public class SpriteManager : MonoBehaviour
 {
     public static SpriteManager Instance = null;
 
-    public Sprite block_red;
-    public Sprite block_orange;
-    public Sprite block_yellow;
-    public Sprite block_green;
-    public Sprite block_blue;
-    public Sprite block_purple;
+    [SerializeField]
+    Sprite block_red = null;
+    [SerializeField]
+    Sprite block_orange = null;
+    [SerializeField]
+    Sprite block_yellow = null;
+    [SerializeField]
+    Sprite block_green = null;
+    [SerializeField]
+    Sprite block_blue = null;
+    [SerializeField]
+    Sprite block_purple = null;
 
-    public Sprite block_top;
+    [SerializeField]
+    Sprite block_top = null;
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else if (Instance != this)
-        {
-            Destroy(gameObject);
-        }
+        Instance = this;        
     }
 
     public Sprite GetBlcokSprite(BlockType blockType)
