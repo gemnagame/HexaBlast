@@ -315,60 +315,6 @@ public class IngameManager : MonoBehaviour
         BlockType checkBlockType = frame.GetBlockType();
         Index index = frame.GetIndex();
 
-        //1. Square
-
-        Index index_leftUp              = Util.CalcIndex(index, Direction.LEFTUP);
-        Index index_leftUp_up           = Util.CalcIndex(index_leftUp, Direction.UP);
-        Index index_up                  = Util.CalcIndex(index, Direction.UP);
-        Index index_rightUp             = Util.CalcIndex(index, Direction.RIGHTUP);
-        Index index_rightUp_up          = Util.CalcIndex(index_rightUp, Direction.UP);
-        Index index_rightUp_rightDown   = Util.CalcIndex(index_rightUp, Direction.RIGHTDOWN);
-        Index index_rightDown           = Util.CalcIndex(index, Direction.RIGHTDOWN);
-        Index index_rightDown_down      = Util.CalcIndex(index_rightDown, Direction.DOWN);
-        Index index_down                = Util.CalcIndex(index, Direction.DOWN);
-        Index index_leftDown            = Util.CalcIndex(index, Direction.LEFTDOWN);
-        Index index_leftDown_down       = Util.CalcIndex(index_leftDown, Direction.DOWN);
-        Index index_leftDown_leftUp     = Util.CalcIndex(index_leftDown, Direction.LEFTUP);
-
-        //LeftUp, Up
-        //+ LeftUp_Up
-        isMatching |= CheckMatchingSquare(checkBlockType, index_leftUp, index_up, index_leftUp_up);
-        //+ RightUp
-        isMatching |= CheckMatchingSquare(checkBlockType, index_leftUp, index_up, index_rightUp);
-
-        //Up, RightUp
-        //+ RightUp_Up
-        isMatching |= CheckMatchingSquare(checkBlockType, index_up, index_rightUp, index_rightUp_up);
-        //+ RightDown
-        isMatching |= CheckMatchingSquare(checkBlockType, index_up, index_rightUp, index_rightDown);
-
-        //RightUp, RightDown
-        //+ RightUp_RightDown
-        isMatching |= CheckMatchingSquare(checkBlockType, index_rightUp, index_rightDown, index_rightUp_rightDown);
-        //+ Down
-        isMatching |= CheckMatchingSquare(checkBlockType, index_rightUp, index_rightDown, index_down);
-
-        //RightDown, Down
-        //+ RightDown_Down
-        isMatching |= CheckMatchingSquare(checkBlockType, index_rightDown, index_down, index_rightDown_down);
-        //+ LeftDown
-        isMatching |= CheckMatchingSquare(checkBlockType, index_rightDown, index_down, index_leftDown);
-
-        //Down, LeftDown
-        //+ LeftDown_Down
-        isMatching |= CheckMatchingSquare(checkBlockType, index_down, index_leftDown, index_leftDown_down);
-        //+ LeftUp
-        isMatching |= CheckMatchingSquare(checkBlockType, index_down, index_leftDown, index_leftUp);
-
-        //LeftDown, LeftUp
-        //+ LeftDown_LeftUp
-        isMatching |= CheckMatchingSquare(checkBlockType, index_leftDown, index_leftUp, index_leftDown_leftUp);
-        //+ Up
-        isMatching |= CheckMatchingSquare(checkBlockType, index_leftDown, index_leftUp, index_up);
-
-
-        //2. Straight
-
         //Up + Down
         isMatching |= CheckMatchingStraight(checkBlockType, index, Direction.UP, Direction.DOWN);
 
@@ -427,39 +373,6 @@ public class IngameManager : MonoBehaviour
 
             CheckMatchingStraight(checkBlockType, calcIndex, direction);
         }
-    }
-
-    bool CheckMatchingSquare(BlockType checkBlockType, Index index1, Index index2, Index index3)
-    {
-        if (checkBlockType == BlockType.NONE || checkBlockType == BlockType.TOP)
-        {
-            return false;
-        }
-
-        if (Util.IsOutOfIndex(index1, Const.MAPSIZE_X, Const.MAPSIZE_Y) ||
-            Util.IsOutOfIndex(index2, Const.MAPSIZE_X, Const.MAPSIZE_Y) ||
-            Util.IsOutOfIndex(index3, Const.MAPSIZE_X, Const.MAPSIZE_Y))
-        {
-            return false;
-        }
-
-        BlockType blockType1 = m_allFrameList[index1.X][index1.Y].GetBlockType();
-        BlockType blockType2 = m_allFrameList[index2.X][index2.Y].GetBlockType();
-        BlockType blockType3 = m_allFrameList[index3.X][index3.Y].GetBlockType();
-        if (blockType1 == checkBlockType &&
-            blockType2 == checkBlockType &&
-            blockType3 == checkBlockType)
-        {
-            m_tempMatchingList.Clear();
-            m_tempMatchingList.Add(m_allFrameList[index1.X][index1.Y]);
-            m_tempMatchingList.Add(m_allFrameList[index2.X][index2.Y]);
-            m_tempMatchingList.Add(m_allFrameList[index3.X][index3.Y]);
-            AddMatchingList(m_tempMatchingList);
-
-            return true;
-        }
-
-        return false;
     }
 
     void AddMatchingList(List<Frame> frameList)
