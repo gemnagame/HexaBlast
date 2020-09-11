@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Ingame : MonoBehaviour
+public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance = null;
+
     //UI
     [SerializeField]
     IngameUI m_ingameUI = null;      //인게임 UI
@@ -48,7 +50,9 @@ public class Ingame : MonoBehaviour
     int m_moveCount = 0;        //이동 횟수
 
     void Awake()
-    {       
+    {
+        Instance = this;
+
         Init();
         CreateObjectOnce();
     }

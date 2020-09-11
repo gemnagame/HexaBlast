@@ -4,9 +4,6 @@ using UnityEngine.UI;
 public class ResultPopup : MonoBehaviour
 {
     [SerializeField]
-    Ingame m_ingame = null;
-
-    [SerializeField]
     Text m_resultText = null;
 
     public void Show(GameResult gameResult)
@@ -38,7 +35,7 @@ public class ResultPopup : MonoBehaviour
 
     public void OnClick_Restart()
     {
-        bool success = m_ingame.GameRestart();
+        bool success = GameManager.Instance.GameRestart();
 
         if(success)
         {

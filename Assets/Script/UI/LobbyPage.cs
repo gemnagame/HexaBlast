@@ -2,9 +2,6 @@
 
 public class LobbyPage : MonoBehaviour
 {
-    [SerializeField]
-    Ingame m_ingame = null;
-
     void Hide()
     {
         gameObject.SetActive(false);
@@ -12,7 +9,7 @@ public class LobbyPage : MonoBehaviour
 
     public void OnClick_Start()
     {
-        m_ingame?.GameStart();
+        GameManager.Instance?.GameStart();
         Hide();
     }
 
