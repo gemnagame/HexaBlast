@@ -66,20 +66,5 @@ public class Frame : MonoBehaviour
     public Index GetIndex()
     {
         return m_index;
-    }
-
-    public void On_PointerDown()
-    {
-        IngameManager.Instance?.FramePointerDown(this);
-    }
-
-    public void On_PointerUp()//다른 오브젝트 엔터 전에 마우스 떼면 끝나도록(버그 방지)
-    {
-        IngameManager.Instance?.FramePointerUp();
-    }
-
-    public void On_PointerEnter()
-    {
-        IngameManager.Instance?.FramePointerEnter(this);
-    }
+    }    
 }

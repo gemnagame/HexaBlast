@@ -6,7 +6,7 @@ public class ResultPopup : MonoBehaviour
     [SerializeField]
     Text m_resultText = null;
 
-    public void Show(string result)
+    public void Show(GameResult gameResult)
     {
         if(m_resultText == null)
         {
@@ -15,7 +15,17 @@ public class ResultPopup : MonoBehaviour
 
         gameObject.SetActive(true);
 
-        m_resultText.text = result;
+        string resultText = string.Empty;
+        if (gameResult == GameResult.GAME_CLEAR)
+        {
+            resultText = Const.GAME_CLEAR_TEXT;
+        }
+        else if (gameResult == GameResult.GAME_OVER)
+        {
+            resultText = Const.GAME_OVER_TEXT;
+        }
+
+        m_resultText.text = resultText;
     }
 
     public void Hide()
@@ -23,12 +33,12 @@ public class ResultPopup : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void On_Restart()
+    public void OnClick_Restart()
     {
-        if(IngameManager.Instance?.TouchBlocked() == false)
-        {
-            IngameManager.Instance?.Restart();
+        bool success = GameManager.Instance.GameRestart();
 
+        if(success)
+        {
             Hide();
         }
     }

@@ -27,9 +27,4 @@ public class IngameUI : MonoBehaviour
 
         m_moveLimitCountText.text = count.ToString();
     }
-
-    public void On_Restart()
-    {
-        IngameManager.Instance?.Restart();        
-    }
 }
