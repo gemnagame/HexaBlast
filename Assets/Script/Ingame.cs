@@ -176,7 +176,7 @@ public class Ingame : MonoBehaviour
         }
     }
 
-    public void PointerDown_Frame(Frame frameStart)
+    public void OnPointerDown_Frame(Frame frameStart)
     {
         if (TouchBlocked())
         {
@@ -186,7 +186,7 @@ public class Ingame : MonoBehaviour
         m_frameStart = frameStart;
     }
 
-    public void PointerUp_Frame()
+    public void OnPointerUp_Frame()
     {
         if (TouchBlocked())
         {
@@ -196,7 +196,7 @@ public class Ingame : MonoBehaviour
         m_frameStart = null;
     }
 
-    public void PointerEnter_Frame(Frame frameEnd)
+    public void OnPointerEnter_Frame(Frame frameEnd)
     {
         if (TouchBlocked() || 
             m_frameStart == null || frameEnd == null)

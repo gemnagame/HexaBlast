@@ -121,10 +121,10 @@ RectTransform:
   m_Father: {fileID: 1894659698411440658}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 620, y: 1180}
+  m_SizeDelta: {x: 720, y: 1280}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &5991069938120089735
 PrefabInstance:
@@ -256,17 +256,17 @@ PrefabInstance:
     - target: {fileID: 2067457954649219325, guid: d11cfac88dd92c14a8ab0f7261aeda00,
         type: 3}
       propertyPath: m_Delegates.Array.data[0].callback.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: PointerDown_Frame
+      value: OnPointerDown_Frame
       objectReference: {fileID: 0}
     - target: {fileID: 2067457954649219325, guid: d11cfac88dd92c14a8ab0f7261aeda00,
         type: 3}
       propertyPath: m_Delegates.Array.data[1].callback.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: PointerEnter_Frame
+      value: OnPointerEnter_Frame
       objectReference: {fileID: 0}
     - target: {fileID: 2067457954649219325, guid: d11cfac88dd92c14a8ab0f7261aeda00,
         type: 3}
       propertyPath: m_Delegates.Array.data[2].callback.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: PointerUp_Frame
+      value: OnPointerUp_Frame
       objectReference: {fileID: 0}
     - target: {fileID: 8712785009651367717, guid: d11cfac88dd92c14a8ab0f7261aeda00,
         type: 3}
