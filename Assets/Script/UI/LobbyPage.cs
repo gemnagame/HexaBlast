@@ -2,10 +2,8 @@
 
 public class LobbyPage : MonoBehaviour
 {
-    public void Show()
-    {
-        gameObject.SetActive(true);
-    }
+    [SerializeField]
+    Ingame m_ingame = null;
 
     void Hide()
     {
@@ -14,12 +12,12 @@ public class LobbyPage : MonoBehaviour
 
     public void OnClick_Start()
     {
-        GameManager.Instance?.GameStart();
+        m_ingame?.GameStart();
         Hide();
     }
 
     public void OnClick_Quit()
     {
-        GameManager.Instance?.GameQuit();
+        Application.Quit();
     }
 }

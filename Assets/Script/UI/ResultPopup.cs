@@ -4,9 +4,12 @@ using UnityEngine.UI;
 public class ResultPopup : MonoBehaviour
 {
     [SerializeField]
+    Ingame m_ingame = null;
+
+    [SerializeField]
     Text m_resultText = null;
 
-    public void Show(string result)
+    public void Show(GameResult gameResult)
     {
         if(m_resultText == null)
         {
@@ -15,7 +18,17 @@ public class ResultPopup : MonoBehaviour
 
         gameObject.SetActive(true);
 
-        m_resultText.text = result;
+        string resultText = string.Empty;
+        if (gameResult == GameResult.GAME_CLEAR)
+        {
+            resultText = Const.GAME_CLEAR_TEXT;
+        }
+        else if (gameResult == GameResult.GAME_OVER)
+        {
+            resultText = Const.GAME_OVER_TEXT;
+        }
+
+        m_resultText.text = resultText;
     }
 
     public void Hide()
@@ -25,8 +38,11 @@ public class ResultPopup : MonoBehaviour
 
     public void OnClick_Restart()
     {
-        GameManager.Instance?.GameRestart();
+        bool success = m_ingame.GameRestart();
 
-        Hide();
+        if(success)
+        {
+            Hide();
+        }
     }
 }

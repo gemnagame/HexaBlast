@@ -50,6 +50,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96682bf8cb5dce44984358fbe7c70a60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_ingameUI: {fileID: 0}
+  m_resultPopup: {fileID: 0}
   m_frameOrigin: {fileID: 3156611640648359842}
   m_blockOrigin: {fileID: 2685631515008329077}
   m_frameAreaTrans: {fileID: 6278240230584332137}

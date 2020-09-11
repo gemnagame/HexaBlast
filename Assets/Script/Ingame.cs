@@ -5,6 +5,12 @@ using UnityEngine;
 
 public class Ingame : MonoBehaviour
 {
+    //UI
+    [SerializeField]
+    IngameUI m_ingameUI = null;      //인게임 UI
+    [SerializeField]
+    ResultPopup m_resultPopup = null;//게임 결과 팝업(게임 클리어/게임 오버)
+
     //object pool
     [SerializeField]
     GameObject m_frameOrigin = null;    //프레임 생성할 때 기준이 되는 GameObject (프레임 : 블럭 뒤의 육각틀)
@@ -118,9 +124,15 @@ public class Ingame : MonoBehaviour
         SetMoveLimitCountText();
     }
 
-    public void GameRestart()
+    public bool GameRestart()
     {
+        if(TouchBlocked())
+        {
+            return false;
+        }
+
         GameStart();
+        return true;
     }
 
     void SetMapDesign()
@@ -626,11 +638,11 @@ public class Ingame : MonoBehaviour
         int count = Const.CLEAR_CONDITION - m_removedTopCount;
         count = count <= 0 ? 0 : count;
 
-        GameManager.Instance?.SetRemovedTopCountText(count);
+        m_ingameUI?.SetRemovedTopCountText(count);
 
         if (m_removedTopCount >= Const.CLEAR_CONDITION)
         {
-            GameManager.Instance?.ShowResultPopup(GameResult.GAME_CLEAR);
+            m_resultPopup?.Show(GameResult.GAME_CLEAR);
         }
     }
 
@@ -639,11 +651,11 @@ public class Ingame : MonoBehaviour
         int count = Const.MOVE_LIMIT_COUNT - m_moveCount;
         count = count <= 0 ? 0 : count;
 
-        GameManager.Instance?.SetMoveLimitCountText(count);
+        m_ingameUI?.SetMoveLimitCountText(count);
 
         if (m_moveCount >= Const.MOVE_LIMIT_COUNT)
         {
-            GameManager.Instance?.ShowResultPopup(GameResult.GAME_OVER);
+            m_resultPopup?.Show(GameResult.GAME_OVER);
         }
     }
 }

@@ -507,7 +507,7 @@ GameObject:
   - component: {fileID: 4596918316034285103}
   - component: {fileID: 7006440326562611800}
   m_Layer: 5
-  m_Name: LobbyUI
+  m_Name: LobbyPage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -584,3 +584,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05b8bf106f5e3f24da2bb4e338530b62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_ingame: {fileID: 0}
