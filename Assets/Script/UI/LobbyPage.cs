@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class LobbyUI : MonoBehaviour
+public class LobbyPage : MonoBehaviour
 {
     public void Show()
     {

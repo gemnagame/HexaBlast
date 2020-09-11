@@ -7,7 +7,7 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     Ingame m_ingame = null;
     [SerializeField]
-    LobbyUI m_lobbyUI = null;
+    LobbyPage m_lobbyPage = null;
     [SerializeField]
     IngameUI m_ingameUI = null;      //인게임 UI
     [SerializeField]
@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        m_lobbyUI?.Show();
+        m_lobbyPage?.Show();
         m_resultPopup?.Hide();
     }
 
