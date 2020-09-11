@@ -443,7 +443,7 @@ public class GameManager : MonoBehaviour
                 DropBlock(frame, true, false, false);
             }
 
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(Const.BLOCK_DROP_LINE_WAIT);
         }
 
         StartCoroutine(CO_DropNewBlock());
@@ -468,7 +468,7 @@ public class GameManager : MonoBehaviour
             yield break;
         }
 
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(Const.BLOCK_DROP_NEW_WAIT);
 
         //새 블럭 추가(제거된 블럭의 타입을 바꿔서 재사용)
         Block newblock = m_removedBlockQueue.Dequeue();

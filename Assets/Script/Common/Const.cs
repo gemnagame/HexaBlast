@@ -6,7 +6,9 @@ static class Const
     public const string GAME_CLEAR_TEXT = "게임 클리어!!";
     public const string GAME_OVER_TEXT = "게임 오버...";
 
-    public const float BLOCK_MOVE_TIME = 0.4f;
+    public const float BLOCK_MOVE_TIME = 0.15f;
+    public const float BLOCK_DROP_NEW_WAIT = 0.06f;
+    public const float BLOCK_DROP_LINE_WAIT = 0.04f;
 
     public const float SPACE_X = -240f;
     public const float SPACE_Y = -300f;
