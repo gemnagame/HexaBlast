@@ -1,9 +1,6 @@
 ﻿
 static class Const
 {
-    public const int CLEAR_CONDITION = 10;
-    public const int MOVE_LIMIT_COUNT = 20;
-    public const string GAME_CLEAR_TEXT = "게임 클리어!!";
     public const string GAME_OVER_TEXT = "게임 오버...";
 
     public const float BLOCK_MOVE_TIME = 0.15f;
@@ -74,12 +71,6 @@ public struct Index
 
     public int X;
     public int Y;
-}
-
-public enum GameResult
-{
-    GAME_CLEAR = 0,
-    GAME_OVER
 }
 
 
