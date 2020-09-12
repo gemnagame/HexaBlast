@@ -135,7 +135,7 @@ MonoBehaviour:
   - {fileID: 6816670818568184283}
   - {fileID: 205447402473320975}
   m_matchingGuideTrans: {fileID: 2212043443356116585}
-  m_useGameOverTimer: 0
+  m_useGameOverTimer: 1
 --- !u!1 &6278240229885836642
 GameObject:
   m_ObjectHideFlags: 0
