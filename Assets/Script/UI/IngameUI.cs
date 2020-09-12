@@ -5,6 +5,8 @@ public class IngameUI : MonoBehaviour
 {
     [SerializeField]
     Text m_scoreText = null;
+    [SerializeField]
+    Image m_timerGaugeImage = null;
 
     public void SetScore(int count)
     {
@@ -14,5 +16,13 @@ public class IngameUI : MonoBehaviour
         }
 
         m_scoreText.text = count.ToString();
+    }
+
+    public void SetTimerGauge(float time)
+    {
+        if(m_timerGaugeImage)
+        {
+            m_timerGaugeImage.fillAmount = time / Const.GAME_OVER_CHECK_TIME;
+        }
     }
 }

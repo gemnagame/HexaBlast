@@ -3,6 +3,8 @@ static class Const
 {
     public const string GAME_OVER_TEXT = "게임 오버...";
 
+    public const float GAME_OVER_CHECK_TIME = 6f;
+
     public const float BLOCK_MOVE_TIME = 0.15f;
     public const float BLOCK_DROP_NEW_WAIT = 0.06f;
     public const float BLOCK_DROP_LINE_WAIT = 0.04f;
@@ -26,17 +28,6 @@ static class Const
     public static int MAPSIZE_Y = MAPDESIGN.GetLength(0);//6
     public static Index ENTRANCE_INDEX = new Index(MAPSIZE_X / 2, MAPSIZE_Y - 1);
     public static Index ENTRANCE_UP_INDEX = new Index(ENTRANCE_INDEX.X, ENTRANCE_INDEX.Y + 1);
-
-    //테스트 데이터
-    //public static BlockType[,] MAPDESIGN = new BlockType[,]
-    //{
-    //        {BlockType.NONE, BlockType.NONE, BlockType.NONE, BlockType.RED, BlockType.NONE, BlockType.NONE, BlockType.NONE},
-    //        {BlockType.NONE, BlockType.YELLOW, BlockType.GREEN, BlockType.PURPLE, BlockType.YELLOW, BlockType.RED, BlockType.NONE},
-    //        {BlockType.PURPLE, BlockType.TOP, BlockType.PURPLE, BlockType.BLUE, BlockType.PURPLE, BlockType.PURPLE, BlockType.GREEN},
-    //        {BlockType.TOP, BlockType.GREEN, BlockType.PURPLE, BlockType.YELLOW, BlockType.YELLOW, BlockType.GREEN, BlockType.YELLOW},
-    //        {BlockType.GREEN, BlockType.BLUE, BlockType.BLUE, BlockType.TOP, BlockType.BLUE, BlockType.GREEN, BlockType.GREEN},
-    //        {BlockType.NONE, BlockType.NONE, BlockType.BLUE, BlockType.TOP, BlockType.PURPLE, BlockType.NONE, BlockType.NONE}
-    //};    
 }
 
 public enum BlockType

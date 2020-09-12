@@ -52,12 +52,23 @@ public class GameManager : MonoBehaviour
     //score
     int m_score = 0;  //점수(제거한 블럭 수)
 
+    //timer
+    float m_gameOverTimer = Const.GAME_OVER_CHECK_TIME;
+
     void Awake()
     {
         Instance = this;
 
         Init();
         CreateObjectOnce();
+    }
+
+    private void Update()
+    {
+        if(TouchBlocked() == false)
+        {
+            SetGameOverTimer(m_gameOverTimer - Time.deltaTime);
+        }
     }
 
     void Init()
@@ -80,9 +91,12 @@ public class GameManager : MonoBehaviour
         //drop
         m_isDropping = false;
         m_removedBlockQueue.Clear();
-        
+
         //score
-        m_score = 0;
+        SetScore(0);
+
+        //timer
+        SetGameOverTimer(Const.GAME_OVER_CHECK_TIME);
     }
 
     void CreateObjectOnce()
@@ -128,7 +142,6 @@ public class GameManager : MonoBehaviour
     {
         Init();
         SetMapDesign();
-        m_ingameUI?.SetScore(m_score);
     }
 
     public bool GameRestart()
@@ -423,8 +436,8 @@ public class GameManager : MonoBehaviour
 
         m_needToRemoveTopList.Clear();
 
-        m_score += m_removedBlockQueue.Count;
-        m_ingameUI?.SetScore(m_score);
+        SetScore(m_score + m_removedBlockQueue.Count);
+        SetGameOverTimer(Const.GAME_OVER_CHECK_TIME);
     }
 
     IEnumerator CO_DropAllBlock(bool useDown = true, bool useLeftDown = true, bool useRightDown = true)
@@ -713,5 +726,23 @@ public class GameManager : MonoBehaviour
         }
 
         return null;
+    }
+
+    void SetScore(int score)
+    {
+        m_score = score;
+        m_ingameUI?.SetScore(score);
+    }
+
+    void SetGameOverTimer(float time)
+    {
+        if(time < 0f)
+        {
+            time = 0f;
+            m_resultPopup?.Show();
+        }
+
+        m_gameOverTimer = time;
+        m_ingameUI?.SetTimerGauge(time);
     }
 }
