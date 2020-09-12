@@ -43,10 +43,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57fe257be23af5e46a3ff1f696d9530b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  block_red: {fileID: 21300000, guid: d3ad42cd1e42d5d4abffb37074aba8b3, type: 3}
-  block_orange: {fileID: 21300000, guid: 0128b841119519b45b898857ca5bae84, type: 3}
-  block_yellow: {fileID: 21300000, guid: b9a57791a466ad742bbd31fe3aeea9af, type: 3}
-  block_green: {fileID: 21300000, guid: f78b622f7ee31af4aa591c49dd619f27, type: 3}
-  block_blue: {fileID: 21300000, guid: 3a419827071fb8f45a4b924b8de36919, type: 3}
-  block_purple: {fileID: 21300000, guid: 0c2805dbb7afe5d4495b7d650baf4e38, type: 3}
-  block_top: {fileID: 21300000, guid: b6519873b421a6147bf8b3fc144e94dd, type: 3}
+  block_red: {fileID: 21300000, guid: 56cacee8850174792979792f5f39ef3e, type: 3}
+  block_orange: {fileID: 21300000, guid: 5d581d4bef9274c588de12a46c12e708, type: 3}
+  block_pink: {fileID: 21300000, guid: 9341b63a881364e709624cfe01039833, type: 3}
+  block_green: {fileID: 21300000, guid: 0bedc5e6d2dfb4984bd3080856ad4700, type: 3}
+  block_blue: {fileID: 21300000, guid: ae70d5f1d23f14f36b7aa2bd254a8853, type: 3}
+  block_purple: {fileID: 21300000, guid: 4b9a0895740ad4ce0bb4d663a9bb4474, type: 3}
+  block_top: {fileID: 21300000, guid: d0ea2ec653dd331458a02626c7a02955, type: 3}

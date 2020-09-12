@@ -10,7 +10,7 @@ public class SpriteManager : MonoBehaviour
     [SerializeField]
     Sprite block_orange = null;
     [SerializeField]
-    Sprite block_yellow = null;
+    Sprite block_pink = null;
     [SerializeField]
     Sprite block_green = null;
     [SerializeField]
@@ -44,7 +44,7 @@ public class SpriteManager : MonoBehaviour
                 }
             case BlockType.YELLOW:
                 {
-                    sprite = block_yellow;
+                    sprite = block_pink;
                     break;
                 }
             case BlockType.GREEN:

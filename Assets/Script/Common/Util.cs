@@ -75,6 +75,6 @@ static class Util
 
     public static BlockType GetRandomBlockType()
     {
-        return (BlockType)Random.Range((int)(BlockType.NONE) + 1, (int)(BlockType.TOP));
+        return (BlockType)Random.Range((int)(BlockType.NONE) + 1, (int)(BlockType.MAX));
     }
 }

@@ -39,7 +39,8 @@ public enum BlockType
     GREEN,
     BLUE,
     PURPLE,
-    TOP//팽이
+    TOP,
+    MAX
 }
 
 public enum Direction
