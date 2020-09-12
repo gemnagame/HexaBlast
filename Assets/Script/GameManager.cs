@@ -32,6 +32,10 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     Transform m_matchingGuideTrans = null;              //todo 가이드 작업
 
+    //test
+    [SerializeField]
+    bool m_useGameOverTimer = true;
+
     //ready
     bool m_isGameReady = false;//게임이 준비된 상태인지 여부
 
@@ -67,7 +71,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if(IsTouchDisabled() == false)
+        if(IsTouchDisabled() == false && m_useGameOverTimer)
         {
             SetGameOverTimer(m_gameOverTimer - Time.deltaTime);
         }
