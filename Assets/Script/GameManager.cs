@@ -26,10 +26,12 @@ public class GameManager : MonoBehaviour
     List<List<Frame>> m_allFrameList = new List<List<Frame>>(); //생성한 프레임 목록
     List<Block> m_allBlockList = new List<Block>();             //생성한 블럭 목록
 
-    //guide //todo 수정
+    //guide
     [SerializeField]
-    GameObject[] m_guide = new GameObject[2];
-    
+    GameObject[] m_matchingGuide = new GameObject[2];   //todo 가이드 작업
+    [SerializeField]
+    Transform m_matchingGuideTrans = null;              //todo 가이드 작업
+
     //ready
     bool m_isGameReady = false;//게임이 준비된 상태인지 여부
 
@@ -65,7 +67,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if(TouchBlocked() == false)
+        if(IsTouchDisabled() == false)
         {
             SetGameOverTimer(m_gameOverTimer - Time.deltaTime);
         }
@@ -73,6 +75,9 @@ public class GameManager : MonoBehaviour
 
     void Init()
     {
+        //guide
+        m_matchingGuideTrans?.gameObject.SetActive(false);
+
         //ready
         m_isGameReady = false;
 
@@ -146,7 +151,7 @@ public class GameManager : MonoBehaviour
 
     public bool GameRestart()
     {
-        if(TouchBlocked())
+        if(IsTouchDisabled())
         {
             return false;
         }
@@ -210,7 +215,7 @@ public class GameManager : MonoBehaviour
 
     public void OnPointerDown_Frame(Frame frameStart)
     {
-        if (TouchBlocked())
+        if (IsTouchDisabled())
         {
             return;
         }
@@ -220,7 +225,7 @@ public class GameManager : MonoBehaviour
 
     public void OnPointerUp_Frame()
     {
-        if (TouchBlocked())
+        if (IsTouchDisabled())
         {
             return;
         }
@@ -230,7 +235,7 @@ public class GameManager : MonoBehaviour
 
     public void OnPointerEnter_Frame(Frame frameEnd)
     {
-        if (TouchBlocked() || 
+        if (IsTouchDisabled() || 
             m_frameStart == null || frameEnd == null)
         {
             return;
@@ -474,7 +479,7 @@ public class GameManager : MonoBehaviour
             m_isDropping = false;
 
             AllCheckMatching();
-            FindMatchableFrames();
+            //SetMatchableFrames();//todo 가이드 작업
 
             yield break;
         }
@@ -579,7 +584,7 @@ public class GameManager : MonoBehaviour
         return m_allFrameList[index.X][index.Y];
     }
 
-    bool TouchBlocked()
+    bool IsTouchDisabled()
     {
         //유저 입력 막기
         return m_isGameReady == false || m_isSwapping || m_isDropping;
@@ -660,7 +665,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void FindMatchableFrames()
+    void SetMatchableFrames()//todo 가이드 작업
     {
         for (int i = 0; i < Const.MAPSIZE_X; ++i)
         {
@@ -673,11 +678,8 @@ public class GameManager : MonoBehaviour
                     //Debug.Log(machableFrames[0].GetIndex().X + ", " + machableFrames[0].GetIndex().Y);
                     //Debug.Log(machableFrames[1].GetIndex().X + ", " + machableFrames[1].GetIndex().Y);
                     
-                    //matchableFrames[0].SetColor(Color.white);//todo test code
-                    //matchableFrames[1].SetColor(Color.white);//todo test code
-
-                    m_guide[0].transform.localPosition = matchableFrames[0].GetPosition();
-                    m_guide[1].transform.localPosition = matchableFrames[1].GetPosition();
+                    m_matchingGuide[0].transform.localPosition = matchableFrames[0].GetPosition();
+                    m_matchingGuide[1].transform.localPosition = matchableFrames[1].GetPosition();
 
                     return;
                 }
@@ -685,7 +687,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    List<Frame> FindMathableFrames(Frame frame)
+    List<Frame> FindMathableFrames(Frame frame)//todo 가이드 작업
     {
         List<Frame> machableFrames = new List<Frame>();
         BlockType checkBlockType = frame.GetBlockType();
@@ -712,7 +714,7 @@ public class GameManager : MonoBehaviour
         return machableFrames;
     }
 
-    Frame IsSameType(BlockType checkBlockType, Index index, Direction direction)
+    Frame IsSameType(BlockType checkBlockType, Index index, Direction direction)//todo frame 두개 인자로 받아 비교
     {
         if (checkBlockType == BlockType.NONE || checkBlockType == BlockType.TOP)
         {
@@ -736,7 +738,7 @@ public class GameManager : MonoBehaviour
 
     void SetGameOverTimer(float time)
     {
-        if(time < 0f)
+        if(time <= 0f)
         {
             time = 0f;
             m_resultPopup?.Show();
