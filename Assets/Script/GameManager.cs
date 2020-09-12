@@ -26,6 +26,12 @@ public class GameManager : MonoBehaviour
     List<List<Frame>> m_allFrameList = new List<List<Frame>>(); //생성한 프레임 목록
     List<Block> m_allBlockList = new List<Block>();             //생성한 블럭 목록
 
+    //guide
+    [SerializeField]
+    GameObject[] m_matchingGuide = new GameObject[2];   //todo 가이드 작업
+    [SerializeField]
+    Transform m_matchingGuideTrans = null;              //todo 가이드 작업
+
     //ready
     bool m_isGameReady = false;//게임이 준비된 상태인지 여부
 
@@ -45,9 +51,11 @@ public class GameManager : MonoBehaviour
     bool m_isDropping = false;                              //블럭들이 드롭 중인지 여부
     Queue<Block> m_removedBlockQueue = new Queue<Block>();  //제거 목록(매칭 블럭, 제거될 팽이 목록) 담는 큐(담았다가 드롭시켜 재사용)
 
-    //clear, over
-    int m_removedTopCount = 0;  //제거된 팽이 수
-    int m_moveCount = 0;        //이동 횟수
+    //score
+    int m_score = 0;  //점수(제거한 블럭 수)
+
+    //timer
+    float m_gameOverTimer = Const.GAME_OVER_CHECK_TIME;
 
     void Awake()
     {
@@ -57,8 +65,19 @@ public class GameManager : MonoBehaviour
         CreateObjectOnce();
     }
 
+    private void Update()
+    {
+        if(IsTouchDisabled() == false)
+        {
+            SetGameOverTimer(m_gameOverTimer - Time.deltaTime);
+        }
+    }
+
     void Init()
     {
+        //guide
+        m_matchingGuideTrans?.gameObject.SetActive(false);
+
         //ready
         m_isGameReady = false;
 
@@ -78,9 +97,11 @@ public class GameManager : MonoBehaviour
         m_isDropping = false;
         m_removedBlockQueue.Clear();
 
-        //clear, over
-        m_removedTopCount = 0;
-        m_moveCount = 0;
+        //score
+        SetScore(0);
+
+        //timer
+        SetGameOverTimer(Const.GAME_OVER_CHECK_TIME);
     }
 
     void CreateObjectOnce()
@@ -106,6 +127,7 @@ public class GameManager : MonoBehaviour
                 GameObject obj = Instantiate(m_frameOrigin, m_frameAreaTrans);
                 if (obj)
                 {
+                    obj.name = "Frame" + i + j;
                     Frame frame = obj.GetComponent<Frame>();
                     m_allFrameList[i].Add(frame);
                 }
@@ -113,6 +135,7 @@ public class GameManager : MonoBehaviour
                 obj = Instantiate(m_blockOrigin, m_blockAreaTrans);
                 if (obj)
                 {
+                    obj.name = "Block" + i + j;
                     Block block = obj.GetComponent<Block>();
                     m_allBlockList.Add(block);
                 }
@@ -124,13 +147,11 @@ public class GameManager : MonoBehaviour
     {
         Init();
         SetMapDesign();
-        SetRemovedTopCountText();
-        SetMoveLimitCountText();
     }
 
     public bool GameRestart()
     {
-        if(TouchBlocked())
+        if(IsTouchDisabled())
         {
             return false;
         }
@@ -194,7 +215,7 @@ public class GameManager : MonoBehaviour
 
     public void OnPointerDown_Frame(Frame frameStart)
     {
-        if (TouchBlocked())
+        if (IsTouchDisabled())
         {
             return;
         }
@@ -204,7 +225,7 @@ public class GameManager : MonoBehaviour
 
     public void OnPointerUp_Frame()
     {
-        if (TouchBlocked())
+        if (IsTouchDisabled())
         {
             return;
         }
@@ -214,7 +235,7 @@ public class GameManager : MonoBehaviour
 
     public void OnPointerEnter_Frame(Frame frameEnd)
     {
-        if (TouchBlocked() || 
+        if (IsTouchDisabled() || 
             m_frameStart == null || frameEnd == null)
         {
             return;
@@ -270,9 +291,6 @@ public class GameManager : MonoBehaviour
             if (isMatching)
             {
                 AfterCheckMatching();
-
-                m_moveCount++;
-                SetMoveLimitCountText();
 
                 m_isSwapping = false;
             }
@@ -422,9 +440,12 @@ public class GameManager : MonoBehaviour
         }
 
         m_needToRemoveTopList.Clear();
+
+        SetScore(m_score + m_removedBlockQueue.Count);
+        SetGameOverTimer(Const.GAME_OVER_CHECK_TIME);
     }
 
-    IEnumerator CO_DropAllBlock()
+    IEnumerator CO_DropAllBlock(bool useDown = true, bool useLeftDown = true, bool useRightDown = true)
     {
         m_isDropping = true;
 
@@ -434,23 +455,23 @@ public class GameManager : MonoBehaviour
             for (int i = 1; i < Const.MAPSIZE_X; i += 2)
             {
                 var frame = m_allFrameList[i][j];
-                DropBlock(frame, true, false, false);
+                DropBlock(frame, useDown, useLeftDown, useRightDown);
             }
 
             for (int i = 0; i < Const.MAPSIZE_X; i += 2)
             {
                 var frame = m_allFrameList[i][j];
-                DropBlock(frame, true, false, false);
+                DropBlock(frame, useDown, useLeftDown, useRightDown);
             }
 
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(Const.BLOCK_DROP_LINE_WAIT);
         }
 
-        StartCoroutine(CO_DropNewBlock());
+        StartCoroutine(CO_InputNewBlock());
 
     }
 
-    IEnumerator CO_DropNewBlock()
+    IEnumerator CO_InputNewBlock()
     {
         //새로 추가할 블럭 없으면 드롭 종료
         if (m_removedBlockQueue.Count == 0)
@@ -458,6 +479,7 @@ public class GameManager : MonoBehaviour
             m_isDropping = false;
 
             AllCheckMatching();
+            //SetMatchableFrames();//todo 가이드 작업
 
             yield break;
         }
@@ -465,10 +487,19 @@ public class GameManager : MonoBehaviour
         Frame entranceFrame = GetFrameByIndex(Const.ENTRANCE_INDEX);
         if (entranceFrame.IsEmpty() == false)
         {
+            if (m_removedBlockQueue.Count > 0)
+            {
+                StartCoroutine(CO_DropAllBlock());
+            }
+            else
+            {
+                Debug.Log("입구 막힘");
+            }
+
             yield break;
         }
 
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(Const.BLOCK_DROP_NEW_WAIT);
 
         //새 블럭 추가(제거된 블럭의 타입을 바꿔서 재사용)
         Block newblock = m_removedBlockQueue.Dequeue();
@@ -477,7 +508,7 @@ public class GameManager : MonoBehaviour
             () =>
             {
                 DropBlock(entranceFrame);
-                StartCoroutine(CO_DropNewBlock());
+                StartCoroutine(CO_InputNewBlock());
             });       
     }
 
@@ -553,7 +584,7 @@ public class GameManager : MonoBehaviour
         return m_allFrameList[index.X][index.Y];
     }
 
-    bool TouchBlocked()
+    bool IsTouchDisabled()
     {
         //유저 입력 막기
         return m_isGameReady == false || m_isSwapping || m_isDropping;
@@ -599,9 +630,6 @@ public class GameManager : MonoBehaviour
                 if (m_needToRemoveTopList.Contains(frame) == false)
                 {
                     m_needToRemoveTopList.Add(frame);
-
-                    m_removedTopCount++;
-                    SetRemovedTopCountText();
                 }
             }
         }
@@ -616,7 +644,7 @@ public class GameManager : MonoBehaviour
         RemoveBlockList();
         
         //드롭
-        StartCoroutine(CO_DropAllBlock());
+        StartCoroutine(CO_DropAllBlock(true, false, false));
     }
 
     void AllCheckMatching()
@@ -637,29 +665,86 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void SetRemovedTopCountText()
+    void SetMatchableFrames()//todo 가이드 작업
     {
-        int count = Const.CLEAR_CONDITION - m_removedTopCount;
-        count = count <= 0 ? 0 : count;
-
-        m_ingameUI?.SetRemovedTopCountText(count);
-
-        if (m_removedTopCount >= Const.CLEAR_CONDITION)
+        for (int i = 0; i < Const.MAPSIZE_X; ++i)
         {
-            m_resultPopup?.Show(GameResult.GAME_CLEAR);
+            for (int j = 0; j < Const.MAPSIZE_Y; ++j)
+            {
+                var matchableFrames = FindMathableFrames(m_allFrameList[i][j]);
+                if(matchableFrames.Count == 2)
+                {
+                    //Debug.Log(machableFrames[0].GetBlockType() + ", " + machableFrames[1].GetBlockType());
+                    //Debug.Log(machableFrames[0].GetIndex().X + ", " + machableFrames[0].GetIndex().Y);
+                    //Debug.Log(machableFrames[1].GetIndex().X + ", " + machableFrames[1].GetIndex().Y);
+                    
+                    m_matchingGuide[0].transform.localPosition = matchableFrames[0].GetPosition();
+                    m_matchingGuide[1].transform.localPosition = matchableFrames[1].GetPosition();
+
+                    return;
+                }
+            }
         }
     }
 
-    void SetMoveLimitCountText()
+    List<Frame> FindMathableFrames(Frame frame)//todo 가이드 작업
     {
-        int count = Const.MOVE_LIMIT_COUNT - m_moveCount;
-        count = count <= 0 ? 0 : count;
+        List<Frame> machableFrames = new List<Frame>();
+        BlockType checkBlockType = frame.GetBlockType();
 
-        m_ingameUI?.SetMoveLimitCountText(count);
-
-        if (m_moveCount >= Const.MOVE_LIMIT_COUNT)
+        foreach (Direction direction in Enum.GetValues(typeof(Direction)))
         {
-            m_resultPopup?.Show(GameResult.GAME_OVER);
+            Frame sameType = IsSameType(checkBlockType, frame.GetIndex(), direction);
+            if(sameType)
+            {
+                Index sideFrameindex = Util.CalcIndex(sameType.GetIndex(), direction);
+                foreach (Direction direction2 in Enum.GetValues(typeof(Direction)))
+                {
+                    Frame sameType2 = IsSameType(checkBlockType, sideFrameindex, direction2);
+                    if (sameType2 && sameType2 != sameType)
+                    {
+                        machableFrames.Add(GetFrameByIndex(sideFrameindex));
+                        machableFrames.Add(sameType2);
+                        return machableFrames;
+                    }
+                }
+            }
         }
+
+        return machableFrames;
+    }
+
+    Frame IsSameType(BlockType checkBlockType, Index index, Direction direction)//todo frame 두개 인자로 받아 비교
+    {
+        if (checkBlockType == BlockType.NONE || checkBlockType == BlockType.TOP)
+        {
+            return null;
+        }
+
+        Frame frame = GetFrameByDir(index, direction);
+        if (frame != null && frame.GetBlockType() == checkBlockType)
+        {
+            return frame;
+        }
+
+        return null;
+    }
+
+    void SetScore(int score)
+    {
+        m_score = score;
+        m_ingameUI?.SetScore(score);
+    }
+
+    void SetGameOverTimer(float time)
+    {
+        if(time <= 0f)
+        {
+            time = 0f;
+            m_resultPopup?.Show();
+        }
+
+        m_gameOverTimer = time;
+        m_ingameUI?.SetTimerGauge(time);
     }
 }

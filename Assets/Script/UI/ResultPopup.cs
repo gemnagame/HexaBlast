@@ -6,7 +6,7 @@ public class ResultPopup : MonoBehaviour
     [SerializeField]
     Text m_resultText = null;
 
-    public void Show(GameResult gameResult)
+    public void Show()
     {
         if(m_resultText == null)
         {
@@ -15,17 +15,7 @@ public class ResultPopup : MonoBehaviour
 
         gameObject.SetActive(true);
 
-        string resultText = string.Empty;
-        if (gameResult == GameResult.GAME_CLEAR)
-        {
-            resultText = Const.GAME_CLEAR_TEXT;
-        }
-        else if (gameResult == GameResult.GAME_OVER)
-        {
-            resultText = Const.GAME_OVER_TEXT;
-        }
-
-        m_resultText.text = resultText;
+        m_resultText.text = Const.GAME_OVER_TEXT;
     }
 
     public void Hide()
