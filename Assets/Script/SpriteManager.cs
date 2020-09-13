@@ -10,7 +10,7 @@ public class SpriteManager : MonoBehaviour
     [SerializeField]
     Sprite block_orange = null;
     [SerializeField]
-    Sprite block_yellow = null;
+    Sprite block_pink = null;
     [SerializeField]
     Sprite block_green = null;
     [SerializeField]
@@ -19,7 +19,7 @@ public class SpriteManager : MonoBehaviour
     Sprite block_purple = null;
 
     [SerializeField]
-    Sprite block_top = null;
+    Sprite block_garbage = null;
 
     void Awake()
     {
@@ -42,9 +42,9 @@ public class SpriteManager : MonoBehaviour
                     sprite = block_orange;
                     break;
                 }
-            case BlockType.YELLOW:
+            case BlockType.PINK:
                 {
-                    sprite = block_yellow;
+                    sprite = block_pink;
                     break;
                 }
             case BlockType.GREEN:
@@ -62,9 +62,9 @@ public class SpriteManager : MonoBehaviour
                     sprite = block_purple;
                     break;
                 }
-            case BlockType.TOP:
+            case BlockType.GARBAGE:
                 {
-                    sprite = block_top;
+                    sprite = block_garbage;
                     break;
                 }
         }

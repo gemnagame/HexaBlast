@@ -4,18 +4,26 @@ using UnityEngine.UI;
 public class ResultPopup : MonoBehaviour
 {
     [SerializeField]
+    LobbyPage m_lobbyPage = null;
+
+    [SerializeField]
     Text m_resultText = null;
+
+    private void Awake()
+    {
+        Hide();
+    }
 
     public void Show()
     {
-        if(m_resultText == null)
-        {
-            return;
-        }
+        SoundManager.instance?.PlayAudio(SoundManager.AudioType.GAMEOVER);
 
         gameObject.SetActive(true);
 
-        m_resultText.text = Const.GAME_OVER_TEXT;
+        if (m_resultText)
+        {
+            m_resultText.text = Const.GAME_OVER_TEXT;
+        }
     }
 
     public void Hide()
@@ -25,11 +33,23 @@ public class ResultPopup : MonoBehaviour
 
     public void OnClick_Restart()
     {
-        bool success = GameManager.Instance.GameRestart();
+        SoundManager.instance?.PlayAudio(SoundManager.AudioType.BUTTONCLICK);
 
-        if(success)
+        if (GameManager.Instance)
         {
-            Hide();
+            bool success = GameManager.Instance.GameStart();
+            if (success)
+            {
+                Hide();
+            }
         }
+    }
+
+    public void OnClick_Exit()
+    {
+        SoundManager.instance?.PlayAudio(SoundManager.AudioType.BUTTONCLICK);
+
+        m_lobbyPage?.Show();
+        Hide();
     }
 }
