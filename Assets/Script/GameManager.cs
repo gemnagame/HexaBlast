@@ -36,8 +36,8 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     bool m_useGameOverTimer = true;
 
-    //ready
-    bool m_isGameReady = false;//게임이 준비된 상태인지 여부
+    //game state
+    GameState m_gameState = GameState.NONE;
 
     //swap
     bool m_isSwapping = false;//두 블럭이 스왑 중인지 여부
@@ -71,7 +71,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if(IsTouchDisabled() == false && m_useGameOverTimer)
+        if(IsTouchDisabled() == false && m_useGameOverTimer && m_gameState != GameState.GAMEOVER)
         {
             SetGameOverTimer(m_gameOverTimer - Time.deltaTime);
         }
@@ -82,8 +82,8 @@ public class GameManager : MonoBehaviour
         //guide
         m_matchingGuideTrans?.gameObject.SetActive(false);
 
-        //ready
-        m_isGameReady = false;
+        //game state
+        m_gameState = GameState.NONE;
 
         //swap
         m_isSwapping = false;
@@ -147,21 +147,21 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void GameStart()
+    public bool GameStart()
     {
+        StopAllCoroutines();
+
         Init();
         SetMapDesign();
-    }
 
-    public bool GameRestart()
-    {
-        if(IsTouchDisabled())
+        if (m_gameState == GameState.READY)
         {
-            return false;
-        }
+            m_gameState = GameState.PLAY;
 
-        GameStart();
-        return true;
+            return true;
+        }
+                
+        return false;
     }
 
     void SetMapDesign()
@@ -190,7 +190,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        m_isGameReady = true;
+        m_gameState = GameState.READY;
     }
 
     void OnDestroy()
@@ -591,7 +591,7 @@ public class GameManager : MonoBehaviour
     bool IsTouchDisabled()
     {
         //유저 입력 막기
-        return m_isGameReady == false || m_isSwapping || m_isDropping;
+        return m_gameState != GameState.PLAY || m_isSwapping || m_isDropping;
     }
 
     void MoveBlockToFrame(Frame fromFrame, Frame toFrame, Action endMovevAction)
@@ -746,6 +746,7 @@ public class GameManager : MonoBehaviour
         {
             time = 0f;
             m_resultPopup?.Show();
+            m_gameState = GameState.GAMEOVER;
         }
 
         m_gameOverTimer = time;

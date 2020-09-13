@@ -335,7 +335,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\uBB34\uD55C\uC758\n\uD37C\uC990"
+  m_Text: 'Infinite
+
+    Puzzle'
 --- !u!1 &4596918316034285089
 GameObject:
   m_ObjectHideFlags: 0

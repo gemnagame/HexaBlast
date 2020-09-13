@@ -10,12 +10,10 @@ public class IngameUI : MonoBehaviour
 
     public void SetScore(int count)
     {
-        if (m_scoreText == null)
+        if (m_scoreText)
         {
-            return;
+            m_scoreText.text = count.ToString();
         }
-
-        m_scoreText.text = count.ToString();
     }
 
     public void SetTimerGauge(float time)

@@ -2,6 +2,11 @@
 
 public class LobbyPage : MonoBehaviour
 {
+    public void Show()
+    {
+        gameObject.SetActive(true);
+    }
+
     void Hide()
     {
         gameObject.SetActive(false);
@@ -9,8 +14,14 @@ public class LobbyPage : MonoBehaviour
 
     public void OnClick_Start()
     {
-        GameManager.Instance?.GameStart();
-        Hide();
+        if(GameManager.Instance)
+        {
+            bool success = GameManager.Instance.GameStart();
+            if (success)
+            {
+                Hide();
+            }
+        }       
     }
 
     public void OnClick_Quit()
