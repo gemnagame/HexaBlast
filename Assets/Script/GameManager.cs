@@ -7,11 +7,15 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance = null;
 
+    //test
+    [SerializeField]
+    bool m_useGameOverTimer = true;
+
     //UI
     [SerializeField]
-    IngameUI m_ingameUI = null;      //인게임 UI
+    IngameUI m_ingameUI = null;
     [SerializeField]
-    ResultPopup m_resultPopup = null;//게임 결과 팝업(게임 클리어/게임 오버)
+    ResultPopup m_resultPopup = null;
 
     //object pool
     [SerializeField]
@@ -26,37 +30,33 @@ public class GameManager : MonoBehaviour
     List<List<Frame>> m_allFrameList = new List<List<Frame>>(); //생성한 프레임 목록
     List<Block> m_allBlockList = new List<Block>();             //생성한 블럭 목록
 
-    //guide
+    //guide //todo 가이드 작업
     [SerializeField]
-    GameObject[] m_matchingGuide = new GameObject[2];   //todo 가이드 작업
+    GameObject[] m_matchingGuide = new GameObject[2];
     [SerializeField]
-    Transform m_matchingGuideTrans = null;              //todo 가이드 작업
-
-    //test
-    [SerializeField]
-    bool m_useGameOverTimer = true;
+    Transform m_matchingGuideTrans = null;
 
     //game state
     GameState m_gameState = GameState.NONE;
 
     //swap
-    bool m_isSwapping = false;//두 블럭이 스왑 중인지 여부
+    bool m_isSwapping = false;
     Frame m_frameStart = null;
     int m_moveCompleteCheckCount = 0;
 
     //matching
-    int m_matchingStraightCount = 0;                        //3매치 게임이라 2(기준 블럭 포함+1)이상부터 매칭 처리
+    int m_matchingStraightCount = 0;                            //3매치 게임이라 2(기준 블럭 포함+1)이상부터 매칭 처리
     List<Frame> m_tempMatchingList = new List<Frame>();    
-    List<Frame> m_matchingList = new List<Frame>();         //매칭 블럭 목록
-    List<Frame> m_matchingNeighborList = new List<Frame>(); //매칭 블럭 주변 목록
-    List<Frame> m_needToRemoveTopList = new List<Frame>();  //제거될 팽이 목록 (매칭 블럭 주변 목록에서 제거될 팽이 찾은 것)
+    List<Frame> m_matchingList = new List<Frame>();             //매칭 블럭 목록
+    List<Frame> m_matchingNeighborList = new List<Frame>();     //매칭 블럭 주변 목록
+    List<Frame> m_needToRemoveGarbageList = new List<Frame>();  //제거될 쓰레기 목록 (매칭 블럭 주변 목록에서 제거될 쓰레기 찾은 것)
     
     //drop
-    bool m_isDropping = false;                              //블럭들이 드롭 중인지 여부
-    Queue<Block> m_removedBlockQueue = new Queue<Block>();  //제거 목록(매칭 블럭, 제거될 팽이 목록) 담는 큐(담았다가 드롭시켜 재사용)
+    bool m_isDropping = false;
+    Queue<Block> m_removedBlockQueue = new Queue<Block>();  //제거 목록(매칭 블럭 + 제거될 쓰레기 목록) 담는 큐(담았다가 드롭시켜 재사용)
 
     //score
-    int m_score = 0;  //점수(제거한 블럭 수)
+    int m_score = 0;
 
     //timer
     float m_gameOverTimer = Const.GAME_OVER_CHECK_TIME;
@@ -95,7 +95,7 @@ public class GameManager : MonoBehaviour
         m_tempMatchingList.Clear();
         m_matchingList.Clear();
         m_matchingNeighborList.Clear();
-        m_needToRemoveTopList.Clear();
+        m_needToRemoveGarbageList.Clear();
 
         //drop
         m_isDropping = false;
@@ -157,6 +157,9 @@ public class GameManager : MonoBehaviour
         if (m_gameState == GameState.READY)
         {
             m_gameState = GameState.PLAY;
+
+            SoundManager.instance?.PlayAudio(SoundManager.AudioType.GAMESTART);
+            SoundManager.instance?.Play_BGM(SoundManager.BGMType.INGAME);
 
             return true;
         }
@@ -263,6 +266,7 @@ public class GameManager : MonoBehaviour
     void SwapAndCheckMatching(Frame frame1, Frame frame2)
     {
         //스왑 후 매칭이 있는지 체크하고 EndSwapAction 호출
+        SoundManager.instance?.PlayAudio(SoundManager.AudioType.SLIDE);
 
         m_isSwapping = true;
         m_moveCompleteCheckCount = 0;
@@ -378,7 +382,7 @@ public class GameManager : MonoBehaviour
     {
         //입력받은 방향따라 재귀로 반복 체크
 
-        if (checkBlockType == BlockType.NONE || checkBlockType == BlockType.TOP)
+        if (checkBlockType == BlockType.NONE || checkBlockType == BlockType.GARBAGE)
         {
             return;
         }
@@ -417,7 +421,7 @@ public class GameManager : MonoBehaviour
 
     void RemoveBlockList()
     {
-        //매칭 블럭, 제거될 팽이 목록 제거
+        //매칭 블럭, 제거될 쓰레기 목록 제거
         //todo 함수로 따로 빼야할듯? 코드 중복임
 
         Vector3 position = Util.CalcPositionByIndex(Const.ENTRANCE_UP_INDEX);                
@@ -434,17 +438,18 @@ public class GameManager : MonoBehaviour
         m_matchingList.Clear();
 
 
-        for (int i = 0; i < m_needToRemoveTopList.Count; ++i)
+        for (int i = 0; i < m_needToRemoveGarbageList.Count; ++i)
         {
-            Block block = m_needToRemoveTopList[i].GetBlock();
+            Block block = m_needToRemoveGarbageList[i].GetBlock();
             m_removedBlockQueue.Enqueue(block);
             block.SetPosition(position);
             block.Init(Util.GetRandomBlockType());
-            m_needToRemoveTopList[i].SetEmpty();
+            m_needToRemoveGarbageList[i].SetEmpty();
         }
 
-        m_needToRemoveTopList.Clear();
+        m_needToRemoveGarbageList.Clear();
 
+        SoundManager.instance?.PlayAudio(SoundManager.AudioType.REMOVE);
         SetScore(m_score + m_removedBlockQueue.Count);
         SetGameOverTimer(Const.GAME_OVER_CHECK_TIME);
     }
@@ -603,7 +608,7 @@ public class GameManager : MonoBehaviour
 
     void MatchingSideEffect()
     {
-        //매칭 블럭 주변에 매칭 효과를 준다(팽이는 두번 받으면 제거됨)
+        //매칭 블럭 주변에 매칭 효과를 준다(쓰레기는 두번 받으면 제거됨)
 
         m_matchingNeighborList.Clear();
 
@@ -631,9 +636,9 @@ public class GameManager : MonoBehaviour
             bool needToRemove = block.AddMatchingNeighborCount();
             if(needToRemove)
             {
-                if (m_needToRemoveTopList.Contains(frame) == false)
+                if (m_needToRemoveGarbageList.Contains(frame) == false)
                 {
-                    m_needToRemoveTopList.Add(frame);
+                    m_needToRemoveGarbageList.Add(frame);
                 }
             }
         }
@@ -720,7 +725,7 @@ public class GameManager : MonoBehaviour
 
     Frame IsSameType(BlockType checkBlockType, Index index, Direction direction)//todo frame 두개 인자로 받아 비교
     {
-        if (checkBlockType == BlockType.NONE || checkBlockType == BlockType.TOP)
+        if (checkBlockType == BlockType.NONE || checkBlockType == BlockType.GARBAGE)
         {
             return null;
         }

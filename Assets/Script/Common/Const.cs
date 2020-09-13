@@ -17,11 +17,11 @@ static class Const
     public static BlockType[,] MAPDESIGN = new BlockType[,]
         {
             {BlockType.NONE, BlockType.NONE, BlockType.NONE, BlockType.BLUE, BlockType.NONE, BlockType.NONE, BlockType.NONE},
-            {BlockType.NONE, BlockType.TOP, BlockType.TOP, BlockType.GREEN, BlockType.TOP, BlockType.TOP, BlockType.NONE},
-            {BlockType.YELLOW, BlockType.PURPLE, BlockType.GREEN, BlockType.RED, BlockType.BLUE, BlockType.PURPLE, BlockType.YELLOW},
-            {BlockType.GREEN, BlockType.PURPLE, BlockType.RED, BlockType.TOP, BlockType.GREEN, BlockType.PURPLE, BlockType.GREEN},
-            {BlockType.BLUE, BlockType.TOP, BlockType.YELLOW, BlockType.PURPLE, BlockType.RED, BlockType.TOP, BlockType.BLUE},
-            {BlockType.NONE, BlockType.NONE, BlockType.TOP, BlockType.TOP, BlockType.TOP, BlockType.NONE, BlockType.NONE}
+            {BlockType.NONE, BlockType.ORANGE, BlockType.ORANGE, BlockType.GREEN, BlockType.GARBAGE, BlockType.GARBAGE, BlockType.NONE},
+            {BlockType.PINK, BlockType.PURPLE, BlockType.GREEN, BlockType.RED, BlockType.BLUE, BlockType.PURPLE, BlockType.PINK},
+            {BlockType.GREEN, BlockType.PURPLE, BlockType.RED, BlockType.PINK, BlockType.GREEN, BlockType.PURPLE, BlockType.GREEN},
+            {BlockType.BLUE, BlockType.BLUE, BlockType.PINK, BlockType.PURPLE, BlockType.RED, BlockType.ORANGE, BlockType.BLUE},
+            {BlockType.NONE, BlockType.NONE, BlockType.GARBAGE, BlockType.GARBAGE, BlockType.ORANGE, BlockType.NONE, BlockType.NONE}
         };
 
     public static int MAPSIZE_X = MAPDESIGN.GetLength(1);//7
@@ -43,11 +43,11 @@ public enum BlockType
     NONE = 0,
     RED,
     ORANGE,
-    YELLOW,
+    PINK,
     GREEN,
     BLUE,
     PURPLE,
-    TOP,
+    GARBAGE,
     MAX
 }
 
@@ -71,6 +71,17 @@ public struct Index
 
     public int X;
     public int Y;
+}
+
+public enum AudioType
+{
+    Pin = 0,
+    GAME_CLEAR,
+    GAME_OVER,
+    BUTTON,
+    BALL,
+    EXPLOSION,
+    MAX
 }
 
 

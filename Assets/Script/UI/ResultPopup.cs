@@ -16,6 +16,8 @@ public class ResultPopup : MonoBehaviour
 
     public void Show()
     {
+        SoundManager.instance?.PlayAudio(SoundManager.AudioType.GAMEOVER);
+
         gameObject.SetActive(true);
 
         if (m_resultText)
@@ -31,6 +33,8 @@ public class ResultPopup : MonoBehaviour
 
     public void OnClick_Restart()
     {
+        SoundManager.instance?.PlayAudio(SoundManager.AudioType.BUTTONCLICK);
+
         if (GameManager.Instance)
         {
             bool success = GameManager.Instance.GameStart();
@@ -43,6 +47,8 @@ public class ResultPopup : MonoBehaviour
 
     public void OnClick_Exit()
     {
+        SoundManager.instance?.PlayAudio(SoundManager.AudioType.BUTTONCLICK);
+
         m_lobbyPage?.Show();
         Hide();
     }

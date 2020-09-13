@@ -49,4 +49,4 @@ MonoBehaviour:
   block_green: {fileID: 21300000, guid: 0bedc5e6d2dfb4984bd3080856ad4700, type: 3}
   block_blue: {fileID: 21300000, guid: ae70d5f1d23f14f36b7aa2bd254a8853, type: 3}
   block_purple: {fileID: 21300000, guid: 4b9a0895740ad4ce0bb4d663a9bb4474, type: 3}
-  block_top: {fileID: 21300000, guid: d0ea2ec653dd331458a02626c7a02955, type: 3}
+  block_garbage: {fileID: 21300000, guid: d0ea2ec653dd331458a02626c7a02955, type: 3}

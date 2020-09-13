@@ -91,7 +91,7 @@ public class Block : MonoBehaviour
 
     public bool AddMatchingNeighborCount()//return : need to remove
     {
-        if (m_blockType != BlockType.TOP)
+        if (m_blockType != BlockType.GARBAGE)
         {
             return false;
         }
