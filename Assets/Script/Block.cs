@@ -17,21 +17,98 @@ public class Block : MonoBehaviour
     Action m_endMoveAction = null;
     float m_moveStartTime = 0f;
 
-    public void Init(BlockType blockType)
+    public void Init(BlockType blockType, Vector3 position)
     {
-        SetBlockType(blockType);
+        SetPosition(position);
+        SetBlockType(blockType);        
 
-        gameObject.SetActive(blockType != BlockType.NONE);
         m_matchingNeighborCount = 0;
 
-        m_moving = false;
-        m_moveStartPosition = Vector3.zero;
-        m_moveTargetPosition = Vector3.zero;
-        m_endMoveAction = null;
-        m_moveStartTime = 0f;
+        SetMove(false, Vector3.zero, Vector3.zero, null, 0f);
     }
 
     void Update()
+    {
+        ProcessMove();
+    }    
+
+    public void StartMove(Vector3 moveTargetPosition, Action endMoveAction)
+    {
+        if(m_moving)
+        {
+            return;
+        }
+
+        SetMove(true, transform.localPosition, moveTargetPosition, endMoveAction, Time.time);
+    }
+
+    public BlockType GetBlockType()
+    {
+        return m_blockType;
+    }
+
+    public bool AddMatchingNeighborCount()//return : need to remove
+    {
+        if (m_blockType != BlockType.GARBAGE)
+        {
+            return false;
+        }
+
+        m_matchingNeighborCount++;
+
+        switch (m_matchingNeighborCount)
+        {
+            case 1:
+                {
+                    if (m_imageBlock)
+                    {
+                        m_imageBlock.color = Color.gray;
+                    }
+
+                    return false;
+                }
+            case 2:
+                {
+                    m_matchingNeighborCount = 0;
+                    return true;
+                }
+        }
+
+        return false;
+    }
+
+    void SetBlockType(BlockType blockType)
+    {
+        m_blockType = blockType;
+        gameObject.SetActive(blockType != BlockType.NONE);
+
+        if (m_imageBlock)
+        {
+            Sprite sprite = SpriteManager.Instance?.GetBlcokSprite(m_blockType);
+            if (sprite)
+            {
+                m_imageBlock.sprite = sprite;
+                m_imageBlock.color = Color.white;
+            }
+        }             
+    }
+
+    void SetPosition(Vector3 position)
+    {
+        transform.localPosition = position;
+    }
+
+    void SetMove(bool moving, Vector3 moveStartPosition, Vector3 moveTargetPosition,
+        Action endMoveAction, float moveStartTime)
+    {
+        m_moving = moving;
+        m_moveStartPosition = moveStartPosition;
+        m_moveTargetPosition = moveTargetPosition;
+        m_endMoveAction = endMoveAction;
+        m_moveStartTime = moveStartTime;
+    }
+
+    void ProcessMove()
     {
         if (m_moving)
         {
@@ -47,75 +124,6 @@ public class Block : MonoBehaviour
                     m_endMoveAction();
                 }
             }
-        }    
-    }
-
-    public void SetPosition(Vector3 position)
-    {
-        transform.localPosition = position;
-    }
-
-    public void StartMove(Vector3 moveTargetPosition, Action endMoveAction)
-    {
-        if(m_moving)
-        {
-            return;
         }
-
-        m_moveStartTime = Time.time;
-        m_moving = true;
-        m_moveStartPosition = transform.localPosition;
-        m_moveTargetPosition = moveTargetPosition;
-        m_endMoveAction = endMoveAction;
-    }
-
-    public BlockType GetBlockType()
-    {
-        return m_blockType;
-    }       
-
-    void SetBlockType(BlockType blockType)
-    {
-        m_blockType = blockType;
-
-        if (m_imageBlock)
-        {
-            Sprite sprite = SpriteManager.Instance?.GetBlcokSprite(m_blockType);
-            if (sprite)
-            {
-                m_imageBlock.sprite = sprite;
-                m_imageBlock.color = Color.white;
-            }
-        }             
-    }
-
-    public bool AddMatchingNeighborCount()//return : need to remove
-    {
-        if (m_blockType != BlockType.GARBAGE)
-        {
-            return false;
-        }
-        
-        m_matchingNeighborCount++;
-
-        switch (m_matchingNeighborCount)
-        {
-            case 1:
-                {
-                    if(m_imageBlock)
-                    {
-                        m_imageBlock.color = Color.gray;
-                    }
-
-                    return false;
-                }
-            case 2:
-                {
-                    m_matchingNeighborCount = 0;
-                    return true;
-                }
-        }
-
-        return false;
     }
 }

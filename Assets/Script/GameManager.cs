@@ -186,8 +186,7 @@ public class GameManager : MonoBehaviour
                 m_allFrameList[i][j].SetPosition(position);
                 m_allFrameList[i][j].SetBlock(m_allBlockList[count]);
 
-                m_allBlockList[count].Init(blockType);
-                m_allBlockList[count].SetPosition(position);
+                m_allBlockList[count].Init(blockType, position);
 
                 count++;
             }
@@ -430,8 +429,7 @@ public class GameManager : MonoBehaviour
         {
             Block block = m_matchingList[i].GetBlock();
             m_removedBlockQueue.Enqueue(block);
-            block.SetPosition(position);
-            block.Init(Util.GetRandomBlockType());
+            block.Init(Util.GetRandomBlockType(), position);
             m_matchingList[i].SetEmpty();
         }
 
@@ -442,8 +440,7 @@ public class GameManager : MonoBehaviour
         {
             Block block = m_needToRemoveGarbageList[i].GetBlock();
             m_removedBlockQueue.Enqueue(block);
-            block.SetPosition(position);
-            block.Init(Util.GetRandomBlockType());
+            block.Init(Util.GetRandomBlockType(), position);
             m_needToRemoveGarbageList[i].SetEmpty();
         }
 
