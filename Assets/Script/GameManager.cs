@@ -19,13 +19,13 @@ public class GameManager : MonoBehaviour
 
     //object pool
     [SerializeField]
-    GameObject m_frameOrigin = null;    //프레임 생성할 때 기준이 되는 GameObject (프레임 : 블럭 뒤의 육각틀)
+    GameObject m_frameOrigin = null;
     [SerializeField]
-    GameObject m_blockOrigin = null;    //블럭 생성할 때 기준이 되는 GameObject
+    GameObject m_blockOrigin = null;
     [SerializeField]
-    Transform m_frameAreaTrans = null;  //프레임 생성할 위치
+    Transform m_frameAreaTrans = null;
     [SerializeField]
-    Transform m_blockAreaTrans = null;  //블럭 생성할 위치
+    Transform m_blockAreaTrans = null;
 
     List<List<Frame>> m_allFrameList = new List<List<Frame>>(); //생성한 프레임 목록
     List<Block> m_allBlockList = new List<Block>();             //생성한 블럭 목록
@@ -45,10 +45,7 @@ public class GameManager : MonoBehaviour
     int m_moveCompleteCheckCount = 0;
 
     //matching
-    int m_matchingStraightCount = 0;                            //3매치 게임이라 2(기준 블럭 포함+1)이상부터 매칭 처리
-    List<Frame> m_tempMatchingList = new List<Frame>();    
     List<Frame> m_matchingList = new List<Frame>();             //매칭 블럭 목록
-    List<Frame> m_matchingNeighborList = new List<Frame>();     //매칭 블럭 주변 목록
     List<Frame> m_needToRemoveGarbageList = new List<Frame>();  //제거될 쓰레기 목록 (매칭 블럭 주변 목록에서 제거될 쓰레기 찾은 것)
     
     //drop
@@ -91,10 +88,7 @@ public class GameManager : MonoBehaviour
         m_moveCompleteCheckCount = 0;
 
         //matching
-        m_matchingStraightCount = 0;
-        m_tempMatchingList.Clear();
         m_matchingList.Clear();
-        m_matchingNeighborList.Clear();
         m_needToRemoveGarbageList.Clear();
 
         //drop
@@ -156,6 +150,7 @@ public class GameManager : MonoBehaviour
 
         if (m_gameState == GameState.READY)
         {
+            //todo 현재는 바로 시작인데, 화면터치시 게임시작하거나 카운트다운 후 시작하거나 하도록 바꿀 예정
             m_gameState = GameState.PLAY;
 
             SoundManager.instance?.PlayAudio(SoundManager.AudioType.GAMESTART);
@@ -361,20 +356,19 @@ public class GameManager : MonoBehaviour
     {
         //직선 매칭 체크
 
-        m_matchingStraightCount = 0;
-        m_tempMatchingList.Clear();
-        CheckMatchingStraight(checkBlockType, index, direction1);
-        CheckMatchingStraight(checkBlockType, index, direction2);
-        if (m_matchingStraightCount >= 2)
+        List<Frame> tempMatchingList = new List<Frame>();
+        CheckMatchingStraight(checkBlockType, index, direction1, tempMatchingList);
+        CheckMatchingStraight(checkBlockType, index, direction2, tempMatchingList);
+        if (tempMatchingList.Count >= 2)
         {
-            AddMatchingList(m_tempMatchingList);
+            AddMatchingList(tempMatchingList);
             return true;
         }
 
         return false;
     }
 
-    void CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction)
+    void CheckMatchingStraight(BlockType checkBlockType, Index index, Direction direction, List<Frame> tempMatchingList)
     {
         //입력받은 방향따라 재귀로 반복 체크
 
@@ -392,10 +386,9 @@ public class GameManager : MonoBehaviour
         BlockType blockType = m_allFrameList[calcIndex.X][calcIndex.Y].GetBlockType();
         if (blockType == checkBlockType)
         {
-            m_matchingStraightCount++;
-            m_tempMatchingList.Add(m_allFrameList[calcIndex.X][calcIndex.Y]);
+            tempMatchingList.Add(m_allFrameList[calcIndex.X][calcIndex.Y]);
 
-            CheckMatchingStraight(checkBlockType, calcIndex, direction);
+            CheckMatchingStraight(checkBlockType, calcIndex, direction, tempMatchingList);
         }
     }
 
@@ -604,27 +597,27 @@ public class GameManager : MonoBehaviour
     {
         //매칭 블럭 주변에 매칭 효과를 준다(쓰레기는 두번 받으면 제거됨)
 
-        m_matchingNeighborList.Clear();
+        List<Frame> matchingNeighborList = new List<Frame>();
 
         for (int i = 0; i < m_matchingList.Count; ++i)
         {
             Index index = m_matchingList[i].GetIndex();
 
-            MatchingSideEffect(GetFrameByDir(index, Direction.LEFTUP));
-            MatchingSideEffect(GetFrameByDir(index, Direction.UP));
-            MatchingSideEffect(GetFrameByDir(index, Direction.RIGHTUP));
-            MatchingSideEffect(GetFrameByDir(index, Direction.RIGHTDOWN));
-            MatchingSideEffect(GetFrameByDir(index, Direction.DOWN));
-            MatchingSideEffect(GetFrameByDir(index, Direction.LEFTDOWN));
+            MatchingSideEffect(GetFrameByDir(index, Direction.LEFTUP), matchingNeighborList);
+            MatchingSideEffect(GetFrameByDir(index, Direction.UP), matchingNeighborList);
+            MatchingSideEffect(GetFrameByDir(index, Direction.RIGHTUP), matchingNeighborList);
+            MatchingSideEffect(GetFrameByDir(index, Direction.RIGHTDOWN), matchingNeighborList);
+            MatchingSideEffect(GetFrameByDir(index, Direction.DOWN), matchingNeighborList);
+            MatchingSideEffect(GetFrameByDir(index, Direction.LEFTDOWN), matchingNeighborList);
         }
     }
 
-    void MatchingSideEffect(Frame frame)
+    void MatchingSideEffect(Frame frame, List<Frame> matchingNeighborList)
     {
         if (frame && frame.IsEmpty() == false &&
-            m_matchingNeighborList.Contains(frame) == false)
+            matchingNeighborList.Contains(frame) == false)
         {
-            m_matchingNeighborList.Add(frame);
+            matchingNeighborList.Add(frame);
 
             Block block = frame.GetBlock();
             bool needToRemove = block.AddMatchingNeighborCount();
