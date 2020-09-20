@@ -180,13 +180,10 @@ public class GameManager : MonoBehaviour
                 Vector3 position = Util.CalcPositionByIndex(i, j);
 
                 int indexX = Const.MAPSIZE_Y - 1 - j;
-                BlockType blockType = Const.MAPDESIGN[indexX, i];                
-
-                m_allFrameList[i][j].Init(blockType != BlockType.NONE, new Index(i, j));
-                m_allFrameList[i][j].SetPosition(position);
-                m_allFrameList[i][j].SetBlock(m_allBlockList[count]);
+                BlockType blockType = Const.MAPDESIGN[indexX, i];
 
                 m_allBlockList[count].Init(blockType, position);
+                m_allFrameList[i][j].Init(new Index(i, j), position, m_allBlockList[count]);
 
                 count++;
             }
