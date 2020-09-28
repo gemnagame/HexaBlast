@@ -5,12 +5,12 @@ public class Frame : MonoBehaviour
     Index m_index;
     Block m_block = null;
 
-    public void Init(bool active, Index index)
+    public void Init(Index index, Vector3 position, Block block)
     {
         m_index = index;
-        m_block = null;
 
-        gameObject.SetActive(active);
+        SetPosition(position);
+        SetBlock(block);
     }
 
     public void SetBlock(Block block)
@@ -21,17 +21,13 @@ public class Frame : MonoBehaviour
         }
 
         m_block = block;
+        gameObject.SetActive(GetBlockType() != BlockType.NONE);
     }
 
     public Block GetBlock()
     {
         return m_block;
-    }
-
-    public void SetPosition(Vector3 position)
-    {
-        transform.localPosition = position;
-    }    
+    }           
 
     public BlockType GetBlockType()
     {
@@ -53,9 +49,9 @@ public class Frame : MonoBehaviour
         return m_block == null;
     }
 
-    public bool IsMoveable()
+    public bool IsMoveable()//todo 이거 왜 m_moveing은 체크를 안할까...? 이유가 있겠지.. 다시 살펴보자
     {
-        return m_block && m_block.GetBlockType() != BlockType.NONE;
+        return GetBlockType() != BlockType.NONE;
     }
 
     public Vector3 GetPosition()
@@ -66,5 +62,10 @@ public class Frame : MonoBehaviour
     public Index GetIndex()
     {
         return m_index;
-    }    
+    }
+
+    void SetPosition(Vector3 position)
+    {
+        transform.localPosition = position;
+    }
 }
